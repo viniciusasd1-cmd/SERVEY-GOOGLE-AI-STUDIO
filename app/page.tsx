@@ -207,120 +207,168 @@ export default function LandingPage({
         )}
       </nav>
 
-      {/* Hero Section com Copy Forte e CTA Principal */}
+      {/* Hero V3: composição editável inspirada na referência aprovada */}
       <section className={styles.heroSection} id="hero-section">
-        <div className={styles.heroContainer}>
-          <div className={styles.heroContent}>
-            <div className={styles.heroTag}>
-              <ShieldCheck size={14} />
-              Vistoria digital para empresas que trabalham com veículos todos os dias
+        <div className={styles.heroV3Shell}>
+          <div className={styles.heroV3Topline}>
+            <div className={styles.heroV3Institutional}>
+              <span className={styles.heroV3InstitutionalMark}>SURVEY</span>
+              <span>INSPEÇÕES QUE GERAM CONFIANÇA</span>
+            </div>
+            <span className={styles.heroV3TopMicrocopy}>MAIS CONTROLE. MAIS EFICIÊNCIA. MAIS RESULTADOS.</span>
+          </div>
+
+          <div className={styles.heroV3Main}>
+            <div className={styles.heroV3Copy}>
+              <span className={styles.heroV3Eyebrow}>
+                <ShieldCheck size={14} aria-hidden="true" />
+                Plataforma de inspeção veicular
+              </span>
+
+              <h1 className={styles.heroV3Title}>
+                Da entrada ao histórico, <span>tudo organizado.</span>
+              </h1>
+
+              <p className={styles.heroV3Subtitle}>
+                Checklist, evidências e rastreabilidade em um só lugar para inspeções veiculares mais rápidas, seguras e confiáveis.
+              </p>
+
+              <div className={styles.heroButtonGroup}>
+                <button
+                  type="button"
+                  id="hero-start-btn"
+                  className={`${styles.primaryBtn} ${styles.heroV3PrimaryBtn}`}
+                  onClick={handleStart}
+                >
+                  Começar agora
+                  <ArrowRight size={18} />
+                </button>
+
+                <button
+                  type="button"
+                  id="hero-demo-btn"
+                  className={`${styles.secondaryBtn} ${styles.heroV3SecondaryBtn}`}
+                  onClick={handleDemo}
+                >
+                  <Sparkles size={16} />
+                  Ver o SURVEY funcionando
+                </button>
+              </div>
+
+              <div className={styles.heroV3Values} aria-label="Valores da plataforma">
+                <span><CheckCircle2 size={15} aria-hidden="true" />Processos mais ágeis</span>
+                <span><CheckCircle2 size={15} aria-hidden="true" />Mais conformidade</span>
+                <span><CheckCircle2 size={15} aria-hidden="true" />Decisões com dados</span>
+              </div>
             </div>
 
-            <h1 className={styles.heroTitle}>
-              Saiba exatamente como o veículo entrou — e <span className={styles.heroHighlight}>tenha o registro para consultar depois</span>.
-            </h1>
+            <div className={styles.heroV3Visual} aria-label="Demonstração visual do dashboard e checklist SURVEY">
+              <div className={styles.heroV3Glow} aria-hidden="true" />
 
-            <p className={styles.heroSubtitle}>
-              Padronize a vistoria com checklist guiado, fotos vinculadas a cada item, identificação do responsável e histórico organizado por veículo.
-            </p>
+              <div className={styles.heroV3Laptop} role="img" aria-label="Dashboard SURVEY em um notebook">
+                <div className={styles.heroV3LaptopLid}>
+                  <div className={styles.heroV3LaptopCamera} />
+                  <div className={styles.heroV3LaptopScreen}>
+                    <aside className={styles.heroV3DashboardSidebar}>
+                      <div className={styles.heroV3DashboardBrand}>
+                        <span className={styles.heroV3DashboardLogo}>S</span>
+                        <strong>SURVEY</strong>
+                      </div>
+                      <span className={styles.heroV3SidebarSection}>MENU</span>
+                      <div className={`${styles.heroV3SidebarItem} ${styles.heroV3SidebarItemActive}`}><Layers size={13} /> Início</div>
+                      <div className={styles.heroV3SidebarItem}><ClipboardCheck size={13} /> Inspeções</div>
+                      <div className={styles.heroV3SidebarItem}><Car size={13} /> Veículos</div>
+                      <div className={styles.heroV3SidebarItem}><Users size={13} /> Clientes</div>
+                      <div className={styles.heroV3SidebarItem}><Building2 size={13} /> Unidades</div>
+                      <div className={styles.heroV3SidebarItem}><FileText size={13} /> Relatórios</div>
+                      <div className={styles.heroV3SidebarItem}><Lock size={13} /> Configurações</div>
+                    </aside>
 
-            <div className={styles.heroButtonGroup}>
-              <button
-                type="button"
-                id="hero-start-btn"
-                className={styles.primaryBtn}
-                onClick={handleStart}
-              >
-                Começar agora
-                <ArrowRight size={18} />
-              </button>
+                    <div className={styles.heroV3DashboardContent}>
+                      <div className={styles.heroV3DashboardHeader}>
+                        <div>
+                          <span className={styles.heroV3DashboardKicker}>VISÃO OPERACIONAL</span>
+                          <strong>Boa tarde, Carlos!</strong>
+                          <small>Acompanhe suas inspeções em um só lugar.</small>
+                        </div>
+                        <span className={styles.heroV3Avatar}>CM</span>
+                      </div>
 
-              <button
-                type="button"
-                id="hero-demo-btn"
-                className={styles.secondaryBtn}
-                onClick={handleDemo}
-              >
-                <Sparkles size={16} color="#2563eb" />
-                Ver o SURVEY funcionando
-              </button>
-            </div>
+                      <div className={styles.heroV3DashboardStats}>
+                        <div><span>Inspeções</span><strong>124</strong><small><TrendingDown size={10} /> 12% este mês</small></div>
+                        <div><span>Em andamento</span><strong>18</strong><small><Clock size={10} /> Atualizado agora</small></div>
+                        <div><span>Concluídas hoje</span><strong>06</strong><small><CheckCircle2 size={10} /> Tudo em dia</small></div>
+                      </div>
 
-            <div className={styles.trustList}>
-              <span className={styles.trustItem}>
-                <Check size={16} className={styles.trustIcon} /> Funciona no navegador
-              </span>
-              <span className={styles.trustItem}>
-                <Check size={16} className={styles.trustIcon} /> Feito para celular
-              </span>
-              <span className={styles.trustItem}>
-                <Check size={16} className={styles.trustIcon} /> Processo guiado
-              </span>
+                      <div className={styles.heroV3RecentHeader}>
+                        <strong>Inspeções recentes</strong>
+                        <span>Ver todas <ArrowRight size={11} /></span>
+                      </div>
+                      <div className={styles.heroV3InspectionTable}>
+                        <div className={styles.heroV3TableRow}><span><b className={styles.heroV3CarDot} /> Civic EXL 2.0</span><small>BRA2E19</small><em className={styles.heroV3TableDone}>Concluída</em></div>
+                        <div className={styles.heroV3TableRow}><span><b className={styles.heroV3CarDot} /> Corolla XEi</span><small>RTA4J82</small><em className={styles.heroV3TableProgress}>Em andamento</em></div>
+                        <div className={styles.heroV3TableRow}><span><b className={styles.heroV3CarDot} /> Onix Premier</span><small>QWE7C16</small><em className={styles.heroV3TableDone}>Concluída</em></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.heroV3LaptopBase}><span /></div>
+              </div>
+
+              <div className={styles.heroV3SideNote} aria-hidden="true">
+                <span>VEÍCULOS MAIS SEGUROS</span>
+                <strong>NEGÓCIOS<br />MAIS FORTES</strong>
+                <div className={styles.heroV3SideLine} />
+              </div>
+
+              <div className={styles.heroV3Phone} role="img" aria-label="Checklist de inspeção SURVEY em um smartphone">
+                <div className={styles.heroV3PhoneNotch} />
+                <div className={styles.heroV3PhoneScreen}>
+                  <div className={styles.heroV3PhoneHeader}><ArrowRight size={12} className={styles.heroV3PhoneBack} /><strong>Inspeção</strong><span>•••</span></div>
+                  <div className={styles.heroV3PhoneVehicle}><Car size={17} /><div><strong>Civic EXL 2.0</strong><small>BRA2E19 • Entrada</small></div></div>
+                  <div className={styles.heroV3PhoneOperator}><span>Operador</span><strong>Carlos M.</strong></div>
+                  <div className={styles.heroV3PhoneProgress}><div><span>Progresso da inspeção</span><strong>2 de 6</strong></div><i><b /></i></div>
+                  <div className={styles.heroV3ChecklistHeader}><strong>Parte externa</strong><span>2/3</span></div>
+                  <div className={styles.heroV3ChecklistItem}><span className={styles.heroV3CheckMark}><Check size={10} /></span><span>Identificação</span><em className={styles.heroV3PhoneOk}>Conforme</em></div>
+                  <div className={styles.heroV3ChecklistItem}><span className={styles.heroV3AttentionMark}>!</span><span>Parte externa</span><em className={styles.heroV3PhoneAttention}>Atenção</em></div>
+                  <div className={styles.heroV3ChecklistItem}><span className={styles.heroV3EmptyMark}>3</span><span>Parte interna</span><em className={styles.heroV3PhonePending}>Não conforme</em></div>
+                  <div className={styles.heroV3PhonePhotos}><span><Camera size={11} /></span><span><Camera size={11} /></span><small>+2 fotos</small></div>
+                  <span className={styles.heroV3PhoneAction}>Próximo item <ArrowRight size={12} /></span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Visual Mockup: Card do Laudo Digital */}
-          <div className={styles.heroCardWrapper}>
-            <div className={styles.heroReportCard}>
-              <div className={styles.reportCardHeader}>
-                <div className={styles.reportHeaderLeft}>
-                  <span className={styles.reportPlateBadge}>BRA2E19</span>
-                  <span className={styles.reportCarTitle}>Civic EXL 2.0 • Entrada</span>
-                </div>
-                <span className={styles.reportHeaderStatus}>
-                  <CheckCircle2 size={13} />
-                  Vistoriado
-                </span>
-              </div>
-
-              <div className={styles.reportCardBody}>
-                <div className={styles.reportMetaRow}>
-                  <span>Data: <strong>Hoje, 14:38</strong></span>
-                  <span>Operador: <strong>Carlos M. (Pátio 01)</strong></span>
-                </div>
-
-                <div className={styles.reportItemsList}>
-                  <div className={styles.reportItemRow}>
-                    <div className={styles.reportItemInfo}>
-                      <CheckCircle2 size={15} color="#16a34a" />
-                      <span>Pneus & Rodas (Sulco / TWI)</span>
-                    </div>
-                    <span className={styles.badgeOk}>Conforme (Novos)</span>
-                  </div>
-
-                  <div className={styles.reportItemRow}>
-                    <div className={styles.reportItemInfo}>
-                      <CheckCircle2 size={15} color="#16a34a" />
-                      <span>Faróis & Lanternas</span>
-                    </div>
-                    <span className={styles.badgeOk}>Sem trincas</span>
-                  </div>
-
-                  <div className={styles.reportItemRow}>
-                    <div className={styles.reportItemInfo}>
-                      <AlertTriangle size={15} color="#d97706" />
-                      <span>Lataria (Lateral Direita)</span>
-                    </div>
-                    <span className={styles.badgeAlert}>1 Risco Apontado</span>
-                  </div>
-
-                  <div className={styles.reportItemRow}>
-                    <div className={styles.reportItemInfo}>
-                      <CheckCircle2 size={15} color="#16a34a" />
-                      <span>Nível de Combustível & Km</span>
-                    </div>
-                    <span className={styles.badgeOk}>3/4 Tanque • 42.180 km</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.reportCardFooter}>
-                <span className={styles.reportSignatureStamp}>
-                  <ShieldCheck size={14} /> Vistoria registrada com data e operador
-                </span>
-                <span>ID: #insp_78942</span>
-              </div>
+          <div className={styles.heroV3Flow} aria-label="Etapas do processo SURVEY">
+            <div className={styles.heroV3FlowCard}>
+              <span className={styles.heroV3FlowNumber}>01</span><div className={styles.heroV3FlowIcon}><Car size={16} /></div>
+              <div><strong>Veículo chegou</strong><p>Identifique o veículo e registre a entrada.</p></div>
             </div>
+            <ArrowRight className={styles.heroV3FlowArrow} size={18} aria-hidden="true" />
+            <div className={styles.heroV3FlowCard}>
+              <span className={styles.heroV3FlowNumber}>02</span><div className={styles.heroV3FlowIcon}><ClipboardCheck size={16} /></div>
+              <div><strong>Abre a inspeção</strong><p>Inicie uma nova inspeção no sistema.</p></div>
+            </div>
+            <ArrowRight className={styles.heroV3FlowArrow} size={18} aria-hidden="true" />
+            <div className={styles.heroV3FlowCard}>
+              <span className={styles.heroV3FlowNumber}>03</span><div className={styles.heroV3FlowIcon}><CheckCircle2 size={16} /></div>
+              <div><strong>Segue checklist</strong><p>Responda os itens de forma guiada.</p></div>
+            </div>
+            <ArrowRight className={styles.heroV3FlowArrow} size={18} aria-hidden="true" />
+            <div className={styles.heroV3FlowCard}>
+              <span className={styles.heroV3FlowNumber}>04</span><div className={styles.heroV3FlowIcon}><Camera size={16} /></div>
+              <div><strong>Registra fotos e respostas</strong><p>Anexe evidências e registre observações.</p></div>
+            </div>
+            <ArrowRight className={styles.heroV3FlowArrow} size={18} aria-hidden="true" />
+            <div className={styles.heroV3FlowCard}>
+              <span className={styles.heroV3FlowNumber}>05</span><div className={styles.heroV3FlowIcon}><History size={16} /></div>
+              <div><strong>Salva histórico</strong><p>Tudo fica registrado e rastreável para consultas futuras.</p></div>
+            </div>
+          </div>
+
+          <div className={styles.heroV3Bottomline}>
+            <span>SURVEY | INSPEÇÃO VEICULAR INTELIGENTE</span>
+            <span>PESSOAS &gt; PROCESSOS &gt; CONFIANÇA</span>
           </div>
         </div>
       </section>
