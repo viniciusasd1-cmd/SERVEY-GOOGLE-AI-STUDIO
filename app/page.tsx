@@ -27,9 +27,9 @@ import {
   Flame,
   PhoneCall,
   MessageSquare,
-  Send
+  Send,
+  Menu
 } from 'lucide-react';
-import { MOCK_PHOTOS_GALLERY } from '../lib/mock-inspection-data';
 import { AuthenticatedUser } from '../components/auth/auth-screens';
 import { ThemeToggle } from '../components/ui/theme-toggle';
 
@@ -59,6 +59,7 @@ export default function LandingPage({
   const [consultEmail, setConsultEmail] = React.useState('');
   const [consultPhone, setConsultPhone] = React.useState('');
   const [consultSubmitted, setConsultSubmitted] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const handleStart = () => {
     if (onStartInspection) {
       onStartInspection();
@@ -84,14 +85,13 @@ export default function LandingPage({
             <span className={styles.logoBadge}>SURVEY</span>
             <div className={styles.brandTextGroup}>
               <span className={styles.brandText}>Vistoria Veicular Digital</span>
-              <span className={styles.brandTagline}>Blindagem & Rastreabilidade B2B</span>
+              <span className={styles.brandTagline}>Processos & Rastreabilidade B2B</span>
             </div>
           </div>
 
           <div className={styles.navLinks}>
-            <a href="#como-funciona" className={styles.navLinkItem}>Como Funciona</a>
-            <a href="#antes-depois" className={styles.navLinkItem}>Antes vs Depois</a>
-            <a href="#segmentos" className={styles.navLinkItem}>Para Quem É</a>
+            <a href="#como-funciona" className={styles.navLinkItem}>Como funciona</a>
+            <a href="#segmentos" className={styles.navLinkItem}>Para quem é</a>
             <a href="#precos" className={styles.navLinkItem}>Planos</a>
             <a href="#faq" className={styles.navLinkItem}>Dúvidas</a>
           </div>
@@ -166,13 +166,45 @@ export default function LandingPage({
                   onClick={handleStart}
                   id="nav-start-btn"
                 >
-                  Começar vistoria
+                  Começar agora
                   <ArrowRight size={14} />
                 </button>
               </>
             )}
           </div>
+
+          <button
+            type="button"
+            className={styles.mobileMenuToggle}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-nav-menu"
+            aria-label={mobileMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
+
+        {mobileMenuOpen && (
+          <div className={styles.mobileNavMenu} id="mobile-nav-menu">
+            <a href="#como-funciona" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>Como funciona</a>
+            <a href="#segmentos" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>Para quem é</a>
+            <a href="#precos" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>Planos</a>
+            <a href="#faq" className={styles.mobileNavLink} onClick={() => setMobileMenuOpen(false)}>Dúvidas</a>
+            {!user && (
+              <button
+                type="button"
+                className={styles.mobileNavAction}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  (onGoToLogin || handleStart)();
+                }}
+              >
+                Entrar
+              </button>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* Hero Section com Copy Forte e CTA Principal */}
@@ -181,15 +213,15 @@ export default function LandingPage({
           <div className={styles.heroContent}>
             <div className={styles.heroTag}>
               <ShieldCheck size={14} />
-              Vistoria Digital • Evidências • Rastreabilidade
+              Vistoria digital para empresas que trabalham com veículos todos os dias
             </div>
 
             <h1 className={styles.heroTitle}>
-              Registre cada detalhe do veículo <span className={styles.heroHighlight}>antes que vire um problema</span>.
+              Saiba exatamente como o veículo entrou — e <span className={styles.heroHighlight}>tenha o registro para consultar depois</span>.
             </h1>
 
             <p className={styles.heroSubtitle}>
-              Padronize vistorias de entrada e saída com checklist guiado, fotos vinculadas a cada item, identificação do responsável e histórico organizado em um único lugar.
+              Padronize a vistoria com checklist guiado, fotos vinculadas a cada item, identificação do responsável e histórico organizado por veículo.
             </p>
 
             <div className={styles.heroButtonGroup}>
@@ -199,7 +231,7 @@ export default function LandingPage({
                 className={styles.primaryBtn}
                 onClick={handleStart}
               >
-                Começar vistoria grátis
+                Começar agora
                 <ArrowRight size={18} />
               </button>
 
@@ -210,19 +242,19 @@ export default function LandingPage({
                 onClick={handleDemo}
               >
                 <Sparkles size={16} color="#2563eb" />
-                Ver checklist interativo
+                Ver o SURVEY funcionando
               </button>
             </div>
 
             <div className={styles.trustList}>
               <span className={styles.trustItem}>
-                <Check size={16} className={styles.trustIcon} /> Sem cartão de crédito
-              </span>
-              <span className={styles.trustItem}>
                 <Check size={16} className={styles.trustIcon} /> Funciona no navegador
               </span>
               <span className={styles.trustItem}>
-                <Check size={16} className={styles.trustIcon} /> Feito para uso no celular
+                <Check size={16} className={styles.trustIcon} /> Feito para celular
+              </span>
+              <span className={styles.trustItem}>
+                <Check size={16} className={styles.trustIcon} /> Processo guiado
               </span>
             </div>
           </div>
@@ -293,90 +325,77 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* Faixa de Métricas e Impacto Real */}
+      {/* Faixa de Valor Operacional */}
       <section className={styles.metricsStrip} id="metrics-strip">
         <div className={styles.metricsContainer}>
           <div className={styles.metricBlock}>
-            <div className={styles.metricValue}>-85%</div>
-            <div className={styles.metricLabel}>Contestações e reclamações de avarias em oficinas e locadoras</div>
+            <div className={styles.metricValue}>REGISTRO POR VEÍCULO</div>
+            <div className={styles.metricLabel}>Cada vistoria fica vinculada ao veículo certo.</div>
           </div>
           <div className={styles.metricBlock}>
-            <div className={styles.metricValue}>1m 45s</div>
-            <div className={styles.metricLabel}>Tempo médio para o vistoriador preencher a entrada completa</div>
+            <div className={styles.metricValue}>EVIDÊNCIAS POR ETAPA</div>
+            <div className={styles.metricLabel}>Fotos e respostas ficam ligadas ao item vistoriado.</div>
           </div>
           <div className={styles.metricBlock}>
-            <div className={styles.metricValue}>R$ 1.800+</div>
-            <div className={styles.metricLabel}>Economia média mensal evitando pagar funilaria que seu time não causou</div>
+            <div className={styles.metricValue}>RESPONSÁVEL IDENTIFICADO</div>
+            <div className={styles.metricLabel}>Saiba quem realizou cada inspeção.</div>
           </div>
           <div className={styles.metricBlock}>
-            <div className={styles.metricValue}>100%</div>
-            <div className={styles.metricLabel}>Rastreabilidade digital com fotos e respostas vinculadas na nuvem</div>
+            <div className={styles.metricValue}>HISTÓRICO CONSULTÁVEL</div>
+            <div className={styles.metricLabel}>Consulte depois o que foi registrado na entrada ou saída.</div>
           </div>
         </div>
       </section>
 
-      {/* Seção Antes vs Depois (O Fim do Caos Operacional) */}
-      <section className={styles.comparisonSection} id="antes-depois">
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionEyebrow}>Comparativo Direto</span>
-          <h2 className={styles.sectionTitle}>Por que as melhores operações aposentaram a prancheta de papel?</h2>
-          <p className={styles.sectionSubtitle}>
-            Veja a diferença entre depender de improvisos e ter um processo profissional com o SURVEY.
-          </p>
-        </div>
-
-        <div className={styles.comparisonGrid}>
-          {/* O Risco do Método Antigo */}
-          <div className={styles.comparisonColOld}>
-            <div className={styles.colHeaderOld}>
-              <X size={24} />
-              <h3 className={styles.colTitleOld}>O Risco do Papel & WhatsApp</h3>
-            </div>
-            <div className={styles.comparisonList}>
-              <div className={styles.comparisonItemOld}>
-                <X size={18} className={styles.iconNegative} />
-                <span><strong>Prejuízo em funilaria:</strong> O cliente alega que o risco na porta foi feito dentro da sua oficina e você é obrigado a pagar a pintura para não perder o cliente.</span>
-              </div>
-              <div className={styles.comparisonItemOld}>
-                <X size={18} className={styles.iconNegative} />
-                <span><strong>Fotos perdidas:</strong> Imagens dispersas na galeria do celular particular do mecânico ou no meio de conversas de WhatsApp sem organização.</span>
-              </div>
-              <div className={styles.comparisonItemOld}>
-                <X size={18} className={styles.iconNegative} />
-                <span><strong>Checklists ilegíveis:</strong> Folhas de papel molhadas, rasgadas, com manchas de óleo ou esquecidas em gavetas quando você mais precisa provar algo.</span>
-              </div>
-              <div className={styles.comparisonItemOld}>
-                <X size={18} className={styles.iconNegative} />
-                <span><strong>Falta de padrão:</strong> Cada operador confere o carro de um jeito; itens cruciais como estepe, manual e ferramentas passam despercebidos.</span>
-              </div>
-            </div>
+      {/* O problema operacional */}
+      <section className={styles.problemSection} id="problema">
+        <div className={styles.problemContainer}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionEyebrow}>O ponto de partida</span>
+            <h2 className={styles.sectionTitle}>Sua operação ainda depende de informação espalhada?</h2>
+            <p className={styles.sectionSubtitle}>
+              Quando a vistoria fica dividida entre papel, WhatsApp, planilhas e memória da equipe, recuperar o estado real do veículo depois se torna difícil.
+            </p>
           </div>
 
-          {/* O Padrão SURVEY */}
-          <div className={styles.comparisonColNew}>
-            <span className={styles.newBadgePopular}>Recomendado</span>
-            <div className={styles.colHeaderNew}>
-              <Check size={24} />
-              <h3 className={styles.colTitleNew}>A Segurança com o SURVEY</h3>
+          <div className={styles.problemTags} role="list" aria-label="Exemplos de registros espalhados">
+            {['Foto no WhatsApp', 'Observação em papel', 'Planilha incompleta', 'Galeria do celular', 'Áudio perdido', 'Memória da equipe', 'Vistoria sem padrão'].map((item) => (
+              <span className={styles.problemTag} role="listitem" key={item}>
+                <AlertTriangle size={16} aria-hidden="true" />
+                {item}
+              </span>
+            ))}
+          </div>
+
+          <p className={styles.problemTransition}>
+            O SURVEY transforma esses registros soltos em um processo único e rastreável.
+          </p>
+        </div>
+      </section>
+
+      {/* Processo visual */}
+      <section className={styles.storySection} id="processo">
+        <div className={styles.storyContainer}>
+          <div className={styles.storyCopy}>
+            <span className={styles.sectionEyebrow}>Processo organizado</span>
+            <h2 className={styles.storyTitle}>Da entrada ao histórico, tudo organizado.</h2>
+            <p className={styles.storyText}>
+              O veículo chega, a inspeção é aberta, a equipe segue o checklist e cada evidência fica vinculada ao registro certo.
+            </p>
+            <div className={styles.storySignal}>
+              <CheckCircle2 size={18} />
+              <span>Um fluxo claro para registrar e consultar.</span>
             </div>
-            <div className={styles.comparisonList}>
-              <div className={styles.comparisonItemNew}>
-                <Check size={18} className={styles.iconPositive} />
-                <span><strong>Blindagem jurídica imediata:</strong> Registro fotográfico e laudo datado no ato do check-in com apontamento claro das avarias pré-existentes.</span>
-              </div>
-              <div className={styles.comparisonItemNew}>
-                <Check size={18} className={styles.iconPositive} />
-                <span><strong>Fotos vinculadas ao componente:</strong> As fotos de pneus, lataria e faróis ficam indexadas direto no item certo, prontas para auditoria.</span>
-              </div>
-              <div className={styles.comparisonItemNew}>
-                <Check size={18} className={styles.iconPositive} />
-                <span><strong>Histórico pesquisável em segundos:</strong> Digite a placa do carro no sistema e veja instantaneamente todo o histórico de entradas e saídas.</span>
-              </div>
-              <div className={styles.comparisonItemNew}>
-                <Check size={18} className={styles.iconPositive} />
-                <span><strong>Interface passo a passo sem rolagem:</strong> O operador visualiza 1 card por vez na tela do celular; concluiu, avança automaticamente.</span>
-              </div>
-            </div>
+          </div>
+          <div className={styles.storyMedia}>
+            <img
+              src="/assets/landing/survey-process-overview.webp"
+              alt="Visão geral do SURVEY com inspeção no desktop e no celular"
+              width={1672}
+              height={941}
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </div>
       </section>
@@ -416,6 +435,43 @@ export default function LandingPage({
                 A vistoria é finalizada com carimbo de horário, identificação do operador e sincronização segura com o banco de dados da sua empresa.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Operação no celular */}
+      <section className={styles.storySection} id="mobile-processo">
+        <div className={`${styles.storyContainer} ${styles.storyContainerReverse}`}>
+          <div className={styles.storyCopy}>
+            <span className={styles.sectionEyebrow}>Feito para a equipe</span>
+            <h2 className={styles.storyTitle}>Feito para vistoriar, não para preencher formulário.</h2>
+            <p className={styles.storyText}>
+              Em vez de um formulário gigante, o operador percorre cards curtos no celular, um item por vez.
+            </p>
+            <div className={styles.flowSteps} aria-label="Fluxo da vistoria">
+              <span>Pneus</span>
+              <ArrowRight size={15} aria-hidden="true" />
+              <span>Faróis</span>
+              <ArrowRight size={15} aria-hidden="true" />
+              <span>Lataria</span>
+              <ArrowRight size={15} aria-hidden="true" />
+              <span>Interior</span>
+              <ArrowRight size={15} aria-hidden="true" />
+              <span>Motor</span>
+            </div>
+            <p className={styles.storyNote}>
+              Fotos, respostas e observações ficam registradas dentro da etapa correspondente.
+            </p>
+          </div>
+          <div className={styles.storyMedia}>
+            <img
+              src="/assets/landing/survey-mobile-inspection.webp"
+              alt="Checklist de vistoria sendo preenchido no celular"
+              width={1448}
+              height={1086}
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </div>
       </section>
@@ -493,67 +549,84 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* Visual Showcase com Fotos de Vistoria */}
-      <section className={styles.visualShowcaseSection} id="visual-showcase-section">
-        <div className={styles.showcaseContainer}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionEyebrow}>Comprovação Visual</span>
-            <h2 className={styles.sectionTitle}>Registro de alta precisão sem margem para dúvidas</h2>
-            <p className={styles.sectionSubtitle}>
-              Simulação de inspeção fotográfica com data e hora vinculada para cada componente.
+      {/* Uso real em campo */}
+      <section className={styles.storySection} id="uso-real">
+        <div className={styles.storyContainer}>
+          <div className={styles.storyCopy}>
+            <span className={styles.sectionEyebrow}>Uso real</span>
+            <h2 className={styles.storyTitle}>Registre a condição real do veículo no momento certo.</h2>
+            <p className={styles.storyText}>
+              A inspeção acontece onde o veículo está: no pátio, na oficina, na entrega ou no recebimento.
+            </p>
+            <ul className={styles.storyChecklist}>
+              <li><Check size={16} /> Veículo identificado</li>
+              <li><Check size={16} /> Operador identificado</li>
+              <li><Check size={16} /> Data e hora</li>
+              <li><Check size={16} /> Checklist utilizado</li>
+              <li><Check size={16} /> Evidências vinculadas</li>
+            </ul>
+          </div>
+          <div className={styles.storyMedia}>
+            <img
+              src="/assets/landing/survey-field-inspection.webp"
+              alt="Vistoriador fotografando um veículo no pátio"
+              width={1448}
+              height={1086}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Rastreabilidade e histórico */}
+      <section className={`${styles.storySection} ${styles.storySectionMuted}`} id="rastreabilidade">
+        <div className={`${styles.storyContainer} ${styles.storyContainerReverse}`}>
+          <div className={styles.storyCopy}>
+            <span className={styles.sectionEyebrow}>Rastreabilidade</span>
+            <h2 className={styles.storyTitle}>Foto sozinha não é histórico.</h2>
+            <p className={styles.storyText}>
+              Uma imagem na galeria mostra apenas uma foto. No SURVEY, a evidência pertence ao contexto certo.
+            </p>
+            <div className={styles.traceChain} aria-label="Cadeia de contexto da evidência">
+              {['Veículo', 'Vistoria', 'Item', 'Operador', 'Filial', 'Data'].map((item, index, items) => (
+                <React.Fragment key={item}>
+                  <span className={styles.traceStep}>{item}</span>
+                  {index < items.length - 1 && <ArrowRight size={14} aria-hidden="true" />}
+                </React.Fragment>
+              ))}
+            </div>
+            <p className={styles.storyNote}>
+              Quando surgir uma dúvida, a empresa encontra o registro completo em vez de procurar arquivos espalhados.
             </p>
           </div>
+          <div className={styles.storyMedia}>
+            <img
+              src="/assets/landing/survey-history-dashboard.webp"
+              alt="Dashboard do histórico de inspeções por veículo"
+              width={1448}
+              height={1086}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </div>
+      </section>
 
-          <div className={styles.showcaseGrid}>
-            <div className={styles.showcaseCard} id="showcase-pneus">
-              <div className={styles.showcaseImageMock}>
-                <img
-                  src={MOCK_PHOTOS_GALLERY.pneus.url}
-                  alt="Vistoria de Pneus"
-                  className={styles.showcaseImg}
-                />
-              </div>
-              <div className={styles.showcaseBody}>
-                <span className={styles.showcaseTag}>Item 01 • Rodas & Pneus</span>
-                <h3 className={styles.showcaseItemTitle}>Conferência de TWI e Sulcos</h3>
-                <p className={styles.showcaseItemDesc}>
-                  Evidência com registro de data e integridade dos pneus dianteiros e traseiros.
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.showcaseCard} id="showcase-lataria">
-              <div className={styles.showcaseImageMock}>
-                <img
-                  src={MOCK_PHOTOS_GALLERY.lataria.url}
-                  alt="Vistoria de Lataria"
-                  className={styles.showcaseImg}
-                />
-              </div>
-              <div className={styles.showcaseBody}>
-                <span className={styles.showcaseTag}>Item 02 • Lataria & Pintura</span>
-                <h3 className={styles.showcaseItemTitle}>Apontamento Prévia de Riscos</h3>
-                <p className={styles.showcaseItemDesc}>
-                  Demarcação de pequenos arranhões e mossas antes da entrada do carro no box.
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.showcaseCard} id="showcase-farois">
-              <div className={styles.showcaseImageMock}>
-                <img
-                  src={MOCK_PHOTOS_GALLERY.farois.url}
-                  alt="Vistoria de Faróis"
-                  className={styles.showcaseImg}
-                />
-              </div>
-              <div className={styles.showcaseBody}>
-                <span className={styles.showcaseTag}>Item 03 • Iluminação</span>
-                <h3 className={styles.showcaseItemTitle}>Conjunto Óptico e Lentes</h3>
-                <p className={styles.showcaseItemDesc}>
-                  Comprovação do estado das lentes de faróis e lanternas na entrega do veículo.
-                </p>
-              </div>
+      {/* Visão do proprietário */}
+      <section className={styles.ownerSection} id="visao-operacional">
+        <div className={styles.ownerContainer}>
+          <div className={styles.ownerIcon} aria-hidden="true"><Building2 size={24} /></div>
+          <div>
+            <span className={styles.sectionEyebrow}>Para quem acompanha a operação</span>
+            <h2 className={styles.storyTitle}>Você deixa de depender do “eu conferi”.</h2>
+            <p className={styles.storyText}>
+              Tenha um registro estruturado de quem realizou a vistoria, quando ela aconteceu e o que foi encontrado.
+            </p>
+            <div className={styles.ownerPillars}>
+              {['Controle da operação', 'Histórico', 'Equipe identificada', 'Consulta por veículo', 'Visão por filial'].map((item) => (
+                <span key={item}><Check size={15} /> {item}</span>
+              ))}
             </div>
           </div>
         </div>
@@ -565,7 +638,7 @@ export default function LandingPage({
           <span className={styles.sectionEyebrow}>Especialidades</span>
           <h2 className={styles.sectionTitle}>Desenvolvido sob medida para seu tipo de negócio</h2>
           <p className={styles.sectionSubtitle}>
-            Se sua empresa recebe, manuseia e libera veículos de clientes ou frotas, o SURVEY é indispensável.
+            Se sua empresa recebe, manuseia e libera veículos de clientes ou frotas, o SURVEY organiza o processo.
           </p>
         </div>
 
@@ -574,7 +647,7 @@ export default function LandingPage({
             <Wrench size={26} className={styles.audienceIcon} />
             <h3 className={styles.audienceTitle}>Oficinas & Centros Automotivos</h3>
             <p className={styles.audienceDesc}>
-              Blinde seu faturamento contra clientes que exigem pintura de riscos que já estavam no veículo antes do conserto.
+              Registre a entrada, os itens observados e as evidências antes do serviço começar.
             </p>
           </div>
 
@@ -582,7 +655,7 @@ export default function LandingPage({
             <Car size={26} className={styles.audienceIcon} />
             <h3 className={styles.audienceTitle}>Lojas de Seminovos</h3>
             <p className={styles.audienceDesc}>
-              Check-in rigoroso de compra, troca ou consignação, documentando originalidade e pendências mecânicas.
+              Padronize o check-in de compra, troca ou consignação e mantenha o histórico por veículo.
             </p>
           </div>
 
@@ -590,7 +663,7 @@ export default function LandingPage({
             <ClipboardCheck size={26} className={styles.audienceIcon} />
             <h3 className={styles.audienceTitle}>Locadoras de Veículos</h3>
             <p className={styles.audienceDesc}>
-              Check-in e check-out em 90 segundos com conferência de estepe, ferramentas, combustível e hodômetro.
+              Conecte entrada e saída com conferência de estepe, ferramentas, combustível e hodômetro.
             </p>
           </div>
 
@@ -598,7 +671,7 @@ export default function LandingPage({
             <Building2 size={26} className={styles.audienceIcon} />
             <h3 className={styles.audienceTitle}>Gestão de Frotas</h3>
             <p className={styles.audienceDesc}>
-              Acompanhamento de trocas de condutores com termo de custódia claro para preservar o patrimônio da empresa.
+              Acompanhe trocas de condutores com registros organizados por unidade, veículo e responsável.
             </p>
           </div>
 
@@ -606,7 +679,7 @@ export default function LandingPage({
             <ShieldCheck size={26} className={styles.audienceIcon} />
             <h3 className={styles.audienceTitle}>Estética Automotiva & Detailing</h3>
             <p className={styles.audienceDesc}>
-              Mapeie o estado da pintura, micro-riscos e peças internas antes de polimentos e vitrificações de alto valor.
+              Mapeie pintura, micro-riscos e peças internas antes de polimentos e vitrificações.
             </p>
           </div>
         </div>
@@ -953,40 +1026,60 @@ export default function LandingPage({
             <div className={styles.faqItem}>
               <h3 className={styles.faqQuestion}>
                 <HelpCircle size={18} color="#2563eb" />
-                Preciso baixar algum aplicativo pesado da loja no celular?
+                Preciso instalar um aplicativo?
               </h3>
               <p className={styles.faqAnswer}>
-                Não! O SURVEY roda diretamente no navegador do celular (Chrome, Safari, etc.) com tecnologia web moderna. Não ocupa espaço na memória do aparelho do mecânico e funciona de forma instantânea.
+                Não. O SURVEY funciona diretamente no navegador do celular, sem exigir um aplicativo separado para começar.
               </p>
             </div>
 
             <div className={styles.faqItem}>
               <h3 className={styles.faqQuestion}>
                 <HelpCircle size={18} color="#2563eb" />
-                Um mecânico ou vistoriador sem conhecimento técnico consegue usar?
+                Funciona no celular da equipe?
               </h3>
               <p className={styles.faqAnswer}>
-                Com certeza. O sistema foi projetado com foco em ergonomia: apenas 1 card por vez na tela, botões grandes e fluxo guiado. Ao marcar OK ou Não OK, o sistema já avança automaticamente para a próxima etapa.
+                Sim. A interface é organizada em cards curtos e fluxo guiado para apoiar o trabalho no pátio, na oficina, na entrega ou no recebimento.
               </p>
             </div>
 
             <div className={styles.faqItem}>
               <h3 className={styles.faqQuestion}>
                 <HelpCircle size={18} color="#2563eb" />
-                O que acontece se um cliente questionar uma avaria após a entrega?
+                Como consultar uma vistoria anterior?
               </h3>
               <p className={styles.faqAnswer}>
-                Basta digitar a placa do carro no histórico do SURVEY. O laudo digital com data, hora e fotos do momento em que o veículo deu entrada estará disponível para consulta imediata, comprovando a condição original.
+                O histórico organiza os registros por veículo, permitindo encontrar a vistoria e revisar seus itens, responsáveis, data e evidências.
               </p>
             </div>
 
             <div className={styles.faqItem}>
               <h3 className={styles.faqQuestion}>
                 <HelpCircle size={18} color="#2563eb" />
-                Minha empresa possui mais de uma filial ou oficina. Posso gerenciar todas?
+                Várias filiais podem usar o SURVEY?
               </h3>
               <p className={styles.faqAnswer}>
-                Sim. A arquitetura multiempresa permite separar dados de cada filial, atribuir operadores responsáveis e manter a organização dos laudos centralizada com segurança.
+                Sim. A operação pode organizar registros por filial e acompanhar quem realizou cada inspeção em cada unidade.
+              </p>
+            </div>
+
+            <div className={styles.faqItem}>
+              <h3 className={styles.faqQuestion}>
+                <HelpCircle size={18} color="#2563eb" />
+                As fotos ficam vinculadas à vistoria?
+              </h3>
+              <p className={styles.faqAnswer}>
+                Sim. As evidências podem ficar associadas à etapa e ao item correspondente, junto das respostas e observações registradas.
+              </p>
+            </div>
+
+            <div className={styles.faqItem}>
+              <h3 className={styles.faqQuestion}>
+                <HelpCircle size={18} color="#2563eb" />
+                Quem pode acessar os registros?
+              </h3>
+              <p className={styles.faqAnswer}>
+                O acesso segue os perfis e a configuração da equipe da empresa, mantendo a consulta alinhada à operação de cada unidade.
               </p>
             </div>
           </div>
@@ -998,10 +1091,10 @@ export default function LandingPage({
         <div className={styles.ctaContainer}>
           <span className={styles.ctaTag}>Comece Hoje Mesmo</span>
           <h2 className={styles.ctaTitle}>
-            Proteja sua operação contra prejuízos e profissionalize seu pátio agora.
+            Registre como o veículo entrou. Consulte quando precisar.
           </h2>
           <p className={styles.ctaSubtitle}>
-            Junte-se a oficinas, locadoras e centros automotivos que eliminaram o papel e ganharam segurança jurídica definitiva.
+            Padronize sua operação com vistoria guiada, evidências organizadas e histórico por veículo.
           </p>
 
           <div className={styles.ctaActionsGroup}>
@@ -1011,7 +1104,7 @@ export default function LandingPage({
               className={styles.ctaBtnPrimary}
               onClick={handleStart}
             >
-              Começar vistoria grátis agora
+              Começar agora
               <ArrowRight size={18} />
             </button>
 
@@ -1021,7 +1114,7 @@ export default function LandingPage({
               className={styles.ctaBtnSecondary}
               onClick={handleDemo}
             >
-              Ver demonstração interativa
+              Ver o SURVEY funcionando
             </button>
           </div>
         </div>
@@ -1034,12 +1127,12 @@ export default function LandingPage({
             <div className={styles.brandLogo}>
               <span className={styles.logoBadge}>SURVEY</span>
               <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '15px' }}>
-                Vistoria Veicular Digital
+                Vistoria, evidências e rastreabilidade
               </span>
             </div>
             <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#94a3b8', flexWrap: 'wrap' }}>
               <a href="#como-funciona" style={{ color: 'inherit', textDecoration: 'none' }}>Como Funciona</a>
-              <a href="#antes-depois" style={{ color: 'inherit', textDecoration: 'none' }}>Vantagens</a>
+              <a href="#problema" style={{ color: 'inherit', textDecoration: 'none' }}>O problema</a>
               <a href="#segmentos" style={{ color: 'inherit', textDecoration: 'none' }}>Segmentos</a>
               <a href="#precos" style={{ color: 'inherit', textDecoration: 'none' }}>Planos & Preços</a>
               <a href="#faq" style={{ color: 'inherit', textDecoration: 'none' }}>Perguntas Frequentes</a>
@@ -1047,8 +1140,8 @@ export default function LandingPage({
           </div>
 
           <div className={styles.footerBottom}>
-            <span>SURVEY • Sistema B2B de Vistoria, Identificação e Rastreabilidade de Veículos</span>
-            <span>Todos os direitos reservados • Ambiente seguro e criptografado</span>
+            <span>SURVEY • Vistoria, evidências e rastreabilidade veicular</span>
+            <span>Registros organizados para operações que trabalham com veículos.</span>
           </div>
         </div>
       </footer>
