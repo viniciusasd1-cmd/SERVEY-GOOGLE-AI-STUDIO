@@ -33,8 +33,17 @@ import {
   Sparkles,
   MapPin,
   Building2,
-  Check
+  Check,
+  BarChart3,
+  ClipboardCheck,
+  FileClock,
+  House,
+  Menu,
+  Settings2,
+  UsersRound,
+  X as CloseIcon,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { AuthenticatedUser } from '../auth/auth-screens';
 import { TeamManagement } from '../team/team-management';
 import {
@@ -48,6 +57,35 @@ import { MOCK_TEMPLATES } from '../../lib/mock-inspection-data';
 import { SendPdfModal } from '../inspection/send-pdf-modal';
 import { useTheme } from '../../lib/theme-context';
 import { ThemeToggle } from '../ui/theme-toggle';
+import styles from './owner-dashboard.module.css';
+
+type OwnerTab = 'dashboard' | 'history' | 'team' | 'access';
+type OwnerSidebarItemId =
+  | 'home'
+  | 'inspections'
+  | 'history'
+  | 'vehicles'
+  | 'customers'
+  | 'branches'
+  | 'reports'
+  | 'settings';
+
+interface OwnerSidebarItem {
+  id: OwnerSidebarItemId;
+  label: string;
+  icon: LucideIcon;
+}
+
+const OWNER_SIDEBAR_ITEMS: OwnerSidebarItem[] = [
+  { id: 'home', label: 'Início', icon: House },
+  { id: 'inspections', label: 'Inspeções', icon: ClipboardCheck },
+  { id: 'history', label: 'Histórico', icon: FileClock },
+  { id: 'vehicles', label: 'Veículos', icon: Car },
+  { id: 'customers', label: 'Clientes', icon: UsersRound },
+  { id: 'branches', label: 'Unidades', icon: Building2 },
+  { id: 'reports', label: 'Relatórios', icon: BarChart3 },
+  { id: 'settings', label: 'Configurações', icon: Settings2 },
+];
 
 interface OwnerDashboardProps {
   currentUser: AuthenticatedUser;
@@ -65,7 +103,11 @@ export function OwnerDashboard({
   initialTab = 'dashboard',
 }: OwnerDashboardProps) {
   const { isDark } = useTheme();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'team' | 'access'>(initialTab);
+  const [activeTab, setActiveTab] = useState<OwnerTab>(initialTab);
+  const [activeSidebarItem, setActiveSidebarItem] = useState<OwnerSidebarItemId>(
+    initialTab === 'history' ? 'history' : initialTab === 'team' ? 'branches' : initialTab === 'access' ? 'settings' : 'home'
+  );
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Estados do Histórico
   const [inspectionsList, setInspectionsList] = useState<InspectionHistoryItem[]>(MOCK_HISTORICAL_INSPECTIONS);
@@ -122,6 +164,26 @@ export function OwnerDashboard({
     );
   });
 
+  const handleSidebarItemClick = (item: OwnerSidebarItem) => {
+    setActiveSidebarItem(item.id);
+    setIsSidebarOpen(false);
+
+    if (item.id === 'home' || item.id === 'inspections') {
+      setActiveTab('dashboard');
+    } else if (item.id === 'history') {
+      setActiveTab('history');
+    } else if (item.id === 'branches') {
+      setActiveTab('team');
+    } else if (item.id === 'settings') {
+      setActiveTab('access');
+    }
+  };
+
+  const handleExistingTabChange = (tab: OwnerTab, sidebarItem: OwnerSidebarItemId) => {
+    setActiveTab(tab);
+    setActiveSidebarItem(sidebarItem);
+  };
+
   // Ação: Baixar PDF de uma vistoria do histórico
   const handleDownloadPdf = (insp: InspectionHistoryItem) => {
     try {
@@ -167,6 +229,7 @@ export function OwnerDashboard({
   return (
     <div
       id="owner-dashboard-root"
+      className={styles.ownerDashboardRoot}
       style={{
         minHeight: '100vh',
         backgroundColor: isDark ? '#090d16' : '#f8fafc',
@@ -176,11 +239,78 @@ export function OwnerDashboard({
         transition: 'background-color 0.2s ease',
       }}
     >
+      <aside
+        className={`${styles.ownerSidebar} ${isSidebarOpen ? styles.ownerSidebarOpen : ''}`}
+        aria-label="Navegação principal do proprietário"
+      >
+        <div className={styles.sidebarBrand}>
+          <div className={styles.sidebarBrandMark}>S</div>
+          <div>
+            <div className={styles.sidebarBrandName}>SURVEY</div>
+            <div className={styles.sidebarBrandCaption}>Operations workspace</div>
+          </div>
+          <button
+            type="button"
+            className={styles.sidebarCloseButton}
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Fechar menu"
+          >
+            <CloseIcon size={18} />
+          </button>
+        </div>
+
+        <div className={styles.sidebarSectionLabel}>Workspace</div>
+        <nav className={styles.sidebarNav}>
+          {OWNER_SIDEBAR_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeSidebarItem === item.id;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`${styles.sidebarNavItem} ${isActive ? styles.sidebarNavItemActive : ''}`}
+                onClick={() => handleSidebarItemClick(item)}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon size={17} strokeWidth={isActive ? 2.4 : 1.9} />
+                <span>{item.label}</span>
+                {isActive && <span className={styles.sidebarActiveDot} aria-hidden="true" />}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className={styles.sidebarFooter}>
+          <div className={styles.sidebarFooterRule} />
+          <div className={styles.sidebarUserCard}>
+            <div className={styles.sidebarAvatar} aria-hidden="true">
+              {currentUser.name.charAt(0).toUpperCase()}
+            </div>
+            <div className={styles.sidebarUserMeta}>
+              <strong>{currentUser.name}</strong>
+              <span>Proprietário</span>
+            </div>
+            <ShieldCheck size={16} className={styles.sidebarUserStatus} aria-label="Conta protegida" />
+          </div>
+        </div>
+      </aside>
+
+      {isSidebarOpen && (
+        <button
+          type="button"
+          className={styles.sidebarOverlay}
+          onClick={() => setIsSidebarOpen(false)}
+          aria-label="Fechar menu lateral"
+        />
+      )}
+
       {/* ========================================================= */}
       {/* CABEÇALHO DO PAINEL DO PROPRIETÁRIO */}
       {/* ========================================================= */}
       <header
         id="owner-header"
+        className={styles.ownerDashboardHeader}
         style={{
           backgroundColor: isDark ? '#0f172a' : '#ffffff',
           borderBottom: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
@@ -205,6 +335,15 @@ export function OwnerDashboard({
         >
           {/* Identificação da Empresa e Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              type="button"
+              className={styles.mobileSidebarTrigger}
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Abrir menu lateral"
+              aria-expanded={isSidebarOpen}
+            >
+              <Menu size={20} />
+            </button>
             <div
               style={{
                 backgroundColor: isDark ? '#1e293b' : '#0f172a',
@@ -365,7 +504,7 @@ export function OwnerDashboard({
           <button
             type="button"
             id="owner-tab-dashboard"
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => handleExistingTabChange('dashboard', 'home')}
             style={{
               padding: '12px 2px',
               border: 'none',
@@ -388,7 +527,7 @@ export function OwnerDashboard({
           <button
             type="button"
             id="owner-tab-history"
-            onClick={() => setActiveTab('history')}
+            onClick={() => handleExistingTabChange('history', 'history')}
             style={{
               padding: '12px 2px',
               border: 'none',
@@ -423,7 +562,7 @@ export function OwnerDashboard({
           <button
             type="button"
             id="owner-tab-team"
-            onClick={() => setActiveTab('team')}
+            onClick={() => handleExistingTabChange('team', 'branches')}
             style={{
               padding: '12px 2px',
               border: 'none',
@@ -446,7 +585,7 @@ export function OwnerDashboard({
           <button
             type="button"
             id="owner-tab-access"
-            onClick={() => setActiveTab('access')}
+            onClick={() => handleExistingTabChange('access', 'settings')}
             style={{
               padding: '12px 2px',
               border: 'none',
@@ -484,6 +623,7 @@ export function OwnerDashboard({
       {/* Notificação / Toast de Segurança */}
       {securityToast && (
         <div
+          className={styles.ownerDashboardToast}
           style={{
             maxWidth: '1280px',
             margin: '12px auto 0',
@@ -525,6 +665,7 @@ export function OwnerDashboard({
       {/* CONTEÚDO PRINCIPAL (RENDERIZADO POR ABA) */}
       {/* ========================================================= */}
       <main
+        className={styles.ownerDashboardMain}
         style={{
           flex: 1,
           maxWidth: '1280px',
@@ -578,7 +719,7 @@ export function OwnerDashboard({
                 <button
                   type="button"
                   id="dash-btn-go-history"
-                  onClick={() => setActiveTab('history')}
+                  onClick={() => handleExistingTabChange('history', 'history')}
                   style={{
                     backgroundColor: '#ffffff',
                     color: '#334155',
@@ -600,7 +741,7 @@ export function OwnerDashboard({
                 <button
                   type="button"
                   id="dash-btn-go-team"
-                  onClick={() => setActiveTab('team')}
+                  onClick={() => handleExistingTabChange('team', 'branches')}
                   style={{
                     backgroundColor: '#0f172a',
                     color: '#ffffff',
@@ -821,7 +962,7 @@ export function OwnerDashboard({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('history')}
+                    onClick={() => handleExistingTabChange('history', 'history')}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -1399,7 +1540,7 @@ export function OwnerDashboard({
           <div>
             <TeamManagement
               currentUser={currentUser}
-              onBack={() => setActiveTab('dashboard')}
+              onBack={() => handleExistingTabChange('dashboard', 'home')}
               onStartInspectionForUser={(operatorName) => {
                 onStartNewInspection();
               }}
