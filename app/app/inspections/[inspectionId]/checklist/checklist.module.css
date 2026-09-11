@@ -1,0 +1,23 @@
+/**
+ * SURVEY - CSS Modules para Tela Operacional de Checklist
+ * Reutiliza e estende os estilos operacionais de inspection-ui
+ */
+
+@import "../../../../../components/inspection/inspection-ui.module.css";
+
+.pageWrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+.offlineIndicator {
+  background-color: #0f172a;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  padding: 4px 8px;
+  letter-spacing: 0.5px;
+}

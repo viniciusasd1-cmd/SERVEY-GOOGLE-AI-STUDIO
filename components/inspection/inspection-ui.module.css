@@ -1,0 +1,804 @@
+/**
+ * SURVEY - CSS Modules para Componentes Operacionais de Vistoria
+ * Design Pro UI, Mobile-first, Cores sóbrias e acessibilidade tátil
+ */
+
+/* Container Principal e Layout */
+.inspectionContainer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header Operacional Compacto */
+.topNav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.topNavContent {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brandGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandBadge {
+  background-color: #0f172a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.vehicleSummary {
+  display: flex;
+  flex-direction: column;
+}
+
+.vehiclePlate {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+}
+
+.vehicleModel {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.navActionBtn {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.navActionBtn:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+/* Barra de Progresso Sticky */
+.progressStickyBar {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 16px;
+  position: sticky;
+  top: 57px;
+  z-index: 35;
+}
+
+.progressWrapper {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.progressLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.progressPercent {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: #16a34a;
+  border-radius: 999px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Área de Conteúdo da Lista */
+.checklistContent {
+  flex: 1;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 14px 16px 100px;
+}
+
+.listHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
+.listTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.75px;
+  color: #64748b;
+}
+
+.listSubtitle {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* Lista de Cards de Etapas */
+.stepsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Card de Etapa */
+.stepCard {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.stepCardActive {
+  border-color: #0f172a;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.stepCardCompleted {
+  border-color: #cbd5e1;
+  background-color: #ffffff;
+}
+
+/* Cabeçalho do Card (Semântica de Toque) */
+.cardHeaderBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 54px;
+}
+
+.cardHeaderBtn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.stepNumber {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.stepNumberCompleted {
+  background-color: #16a34a;
+  color: #ffffff;
+}
+
+.stepNumberActive {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.headerTextGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.stepTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stepSummarySnippet {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Badges de Status */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.statusPending {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.statusCompleted {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.statusWarning {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.chevronIcon {
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+}
+
+.chevronRotated {
+  transform: rotate(180deg);
+  color: #0f172a;
+}
+
+/* Conteúdo Expandido do Card */
+.cardBody {
+  padding: 0 16px 18px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #fafbfc;
+}
+
+.stepDescription {
+  font-size: 13px;
+  color: #475569;
+  padding-top: 12px;
+  line-height: 1.4;
+}
+
+/* Seção de Resposta / Controles */
+.controlGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controlLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Controles de BOOLEAN (OK / Atenção) */
+.booleanControls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.booleanBtn {
+  min-height: 48px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  color: #334155;
+}
+
+.booleanBtn:active {
+  transform: scale(0.98);
+}
+
+.booleanOkSelected {
+  background-color: #16a34a;
+  border-color: #15803d;
+  color: #ffffff;
+}
+
+.booleanWarningSelected {
+  background-color: #d97706;
+  border-color: #b45309;
+  color: #ffffff;
+}
+
+/* Controles de Escolha Única */
+.choiceGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.choiceBtn {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+}
+
+.choiceBtnSelected {
+  background-color: #f8fafc;
+  border-color: #0f172a;
+  border-width: 2px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Controles de Múltipla Escolha (Chips) */
+.chipContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.chip:active {
+  transform: scale(0.97);
+}
+
+.chipSelected {
+  background-color: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Inputs de Texto e Número */
+.inputField {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 14px;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.inputField:focus {
+  border-color: #0f172a;
+}
+
+.numberInputWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.numberUnitSuffix {
+  padding: 0 14px;
+  height: 46px;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.inputFieldNumber {
+  border-radius: 8px 0 0 8px;
+}
+
+/* Área de Fotos */
+.photoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.photoGallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+.photoItem {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  background-color: #0f172a;
+}
+
+.photoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.removePhotoBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photoAddBtn {
+  min-height: 46px;
+  border: 1px dashed #94a3b8;
+  background-color: #ffffff;
+  border-radius: 8px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.photoAddBtn:hover {
+  background-color: #f8fafc;
+  border-color: #475569;
+}
+
+/* Campo de Observação */
+.notesArea {
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 13px;
+  color: #0f172a;
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.notesArea:focus {
+  border-color: #0f172a;
+  outline: none;
+}
+
+/* Botão Concluir Etapa */
+.stepCompleteBtn {
+  width: 100%;
+  min-height: 48px;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  margin-top: 4px;
+}
+
+.stepCompleteBtn:hover {
+  background-color: #1e293b;
+}
+
+.stepCompleteBtn:active {
+  transform: scale(0.99);
+}
+
+/* Rodapé Fixo Inferior */
+.bottomFixedBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  z-index: 50;
+  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.bottomFixedContent {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bottomProgressInfo {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.bottomStepsCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.bottomStepsHint {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.primaryFinishBtn {
+  flex: 1;
+  min-height: 48px;
+  background-color: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.primaryFinishBtn:disabled {
+  background-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.primaryFinishBtn:not(:disabled):hover {
+  background-color: #15803d;
+}
+
+.primaryFinishBtn:not(:disabled):active {
+  transform: scale(0.99);
+}
+
+/* Modal / Estado Final de Vistoria Concluída */
+.completedModalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.7);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.completedCard {
+  background-color: #ffffff;
+  border-radius: 12px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.successIconCircle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 2px solid #bbf7d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.completedTitle {
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  color: #0f172a;
+}
+
+.completedSubtitle {
+  font-size: 13px;
+  text-align: center;
+  color: #64748b;
+  margin-top: -8px;
+}
+
+.summarySection {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.summaryLabel {
+  color: #64748b;
+}
+
+.summaryValue {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.summaryStepItem {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modalActionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.secondaryBtn {
+  width: 100%;
+  min-height: 46px;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.secondaryBtn:hover {
+  background-color: #e2e8f0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

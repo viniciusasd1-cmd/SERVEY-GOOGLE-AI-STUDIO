@@ -1,0 +1,7 @@
+{
+  "name": "SURVEY - Vistoria de Veículos",
+  "description": "Sistema multiempresa para vistoria, identificação e rastreabilidade de veículos.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

@@ -1,0 +1,397 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   SURVEY Platform - Variáveis de Tema (Claro / Escuro)
+   ========================================================================== */
+:root {
+  --bg-canvas: #ffffff;
+  --bg-card: #ffffff;
+  --bg-surface: #f8fafc;
+  --bg-subtle: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border-subtle: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-strong: #94a3b8;
+  --brand-primary: #2563eb;
+  --brand-primary-hover: #1d4ed8;
+  --brand-accent: #0f172a;
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-elevated: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+  color-scheme: light;
+}
+
+[data-theme="dark"],
+.dark {
+  --bg-canvas: #090d16;
+  --bg-card: #0f172a;
+  --bg-surface: #131d31;
+  --bg-subtle: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-subtle: #1e293b;
+  --border-medium: #334155;
+  --border-strong: #475569;
+  --brand-primary: #3b82f6;
+  --brand-primary-hover: #60a5fa;
+  --brand-accent: #1e293b;
+  --input-bg: #1e293b;
+  --input-border: #334155;
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+/* Transições suaves globais ao alternar o tema */
+body, 
+input, 
+textarea, 
+select, 
+button {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
+/* ==========================================================================
+   Sobrescritas Globais para Modo Escuro ([data-theme="dark"] e .dark)
+   ========================================================================== */
+
+/* 1. Base Document & Canvas */
+[data-theme="dark"],
+.dark,
+[data-theme="dark"] body,
+.dark body {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+}
+
+/* 2. Landing Page no Modo Escuro */
+[data-theme="dark"] [class*="landingWrapper"],
+.dark [class*="landingWrapper"] {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="navbar"],
+.dark [class*="navbar"] {
+  background-color: rgba(15, 23, 42, 0.92) !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="brandText"],
+.dark [class*="brandText"] {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="brandTagline"],
+.dark [class*="brandTagline"] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="navLinkItem"],
+.dark [class*="navLinkItem"] {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] [class*="navLinkItem"]:hover,
+.dark [class*="navLinkItem"]:hover {
+  color: #38bdf8 !important;
+}
+
+[data-theme="dark"] [class*="navBtnSecondary"],
+.dark [class*="navBtnSecondary"] {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] [class*="navBtnSecondary"]:hover,
+.dark [class*="navBtnSecondary"]:hover {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="heroSection"],
+.dark [class*="heroSection"] {
+  background: radial-gradient(circle at 50% -10%, #1e293b 0%, #090d16 75%) !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="heroTitle"],
+.dark [class*="heroTitle"] {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="heroSubtitle"],
+.dark [class*="heroSubtitle"] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="heroTag"],
+.dark [class*="heroTag"] {
+  background-color: #172554 !important;
+  border-color: #1e40af !important;
+  color: #93c5fd !important;
+}
+
+/* Cards na Landing Page */
+[data-theme="dark"] [class*="featureCard"],
+.dark [class*="featureCard"],
+[data-theme="dark"] [class*="comparisonCard"],
+.dark [class*="comparisonCard"],
+[data-theme="dark"] [class*="planCard"],
+.dark [class*="planCard"],
+[data-theme="dark"] [class*="roiCard"],
+.dark [class*="roiCard"],
+[data-theme="dark"] [class*="faqCard"],
+.dark [class*="faqCard"],
+[data-theme="dark"] [class*="testimonialCard"],
+.dark [class*="testimonialCard"],
+[data-theme="dark"] [class*="statCard"],
+.dark [class*="statCard"] {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] [class*="featureCard"]:hover,
+.dark [class*="featureCard"]:hover {
+  border-color: #3b82f6 !important;
+  background-color: #131d31 !important;
+}
+
+[data-theme="dark"] [class*="sectionTitle"],
+.dark [class*="sectionTitle"],
+[data-theme="dark"] h2,
+.dark h2,
+[data-theme="dark"] h3,
+.dark h3 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="sectionSubtitle"],
+.dark [class*="sectionSubtitle"],
+[data-theme="dark"] [class*="featureDescription"],
+.dark [class*="featureDescription"] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="faqQuestion"],
+.dark [class*="faqQuestion"] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="faqAnswer"],
+.dark [class*="faqAnswer"] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="footer"],
+.dark [class*="footer"] {
+  background-color: #050811 !important;
+  border-top-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+/* 3. Telas de Autenticação no Modo Escuro */
+[data-theme="dark"] [class*="authPageWrapper"],
+.dark [class*="authPageWrapper"] {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="authNavbar"],
+.dark [class*="authNavbar"] {
+  background-color: #0f172a !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="authNavBackBtn"],
+.dark [class*="authNavBackBtn"] {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] [class*="authNavBackBtn"]:hover,
+.dark [class*="authNavBackBtn"]:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="authCard"],
+.dark [class*="authCard"] {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] [class*="formInput"],
+.dark [class*="formInput"],
+[data-theme="dark"] input[type="text"],
+.dark input[type="text"],
+[data-theme="dark"] input[type="email"],
+.dark input[type="email"],
+[data-theme="dark"] input[type="password"],
+.dark input[type="password"],
+[data-theme="dark"] textarea,
+.dark textarea,
+[data-theme="dark"] select,
+.dark select {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="formInput"]:focus,
+.dark [class*="formInput"]:focus,
+[data-theme="dark"] input:focus,
+.dark input:focus,
+[data-theme="dark"] textarea:focus,
+.dark textarea:focus {
+  border-color: #3b82f6 !important;
+  outline-color: #3b82f6 !important;
+  background-color: #131d31 !important;
+}
+
+[data-theme="dark"] [class*="formLabel"],
+.dark [class*="formLabel"] {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] [class*="dividerText"],
+.dark [class*="dividerText"] {
+  background-color: #0f172a !important;
+  color: #64748b !important;
+}
+
+[data-theme="dark"] [class*="authDivider"]::before,
+.dark [class*="authDivider"]::before {
+  border-top-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="googleLoginBtn"],
+.dark [class*="googleLoginBtn"] {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="googleLoginBtn"]:hover,
+.dark [class*="googleLoginBtn"]:hover {
+  background-color: #273549 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] [class*="demoShortcutCard"],
+.dark [class*="demoShortcutCard"] {
+  background-color: #131d31 !important;
+  border-color: #1e293b !important;
+}
+
+/* 4. Telas Operacionais de Vistoria (Checklist & Template Selector) */
+[data-theme="dark"] [class*="inspectionContainer"],
+.dark [class*="inspectionContainer"] {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="topNav"],
+.dark [class*="topNav"] {
+  background-color: #0f172a !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="vehiclePlate"],
+.dark [class*="vehiclePlate"] {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="vehicleSub"],
+.dark [class*="vehicleSub"] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="stepperContainer"],
+.dark [class*="stepperContainer"] {
+  background-color: #0f172a !important;
+  border-bottom-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="stepCard"],
+.dark [class*="stepCard"],
+[data-theme="dark"] [class*="checklistCard"],
+.dark [class*="checklistCard"],
+[data-theme="dark"] [class*="templateCard"],
+.dark [class*="templateCard"] {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="inspectionFooter"],
+.dark [class*="inspectionFooter"] {
+  background-color: #0f172a !important;
+  border-top-color: #1e293b !important;
+}
+
+/* 5. Painel Executivo do Proprietário (OwnerDashboard) & Equipes */
+[data-theme="dark"] #owner-dashboard-root,
+.dark #owner-dashboard-root {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .dashboard-dark-bg,
+.dark .dashboard-dark-bg {
+  background-color: #090d16 !important;
+}
+
+[data-theme="dark"] .dashboard-dark-card,
+.dark .dashboard-dark-card {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* 6. Simulação de Moldura de Celular no Modo Escuro */
+[data-theme="dark"] #mobile-frame-container,
+.dark #mobile-frame-container {
+  background-color: #090d16 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 12px #1e293b !important;
+}
+
+[data-theme="dark"] #mobile-frame-notch,
+.dark #mobile-frame-notch {
+  background-color: #0f172a !important;
+  border-bottom-color: #1e293b !important;
+}
+
+/* Scrollbars personalizadas discretas no modo escuro */
+[data-theme="dark"] ::-webkit-scrollbar,
+.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track,
+.dark ::-webkit-scrollbar-track {
+  background: #090d16;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb,
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
