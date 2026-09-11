@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styles from './auth.module.css';
 import { 
   ArrowLeft, 
@@ -13,33 +13,310 @@ import {
   ArrowRight, 
   CheckCircle2, 
   AlertCircle,
+  Copy,
   KeyRound,
+  Loader2,
   ShieldCheck,
   Sparkles
 } from 'lucide-react';
 import {
   AuthAccessError,
+  beginTotpChallenge,
+  beginTotpEnrollment,
   createAuthenticatedUser,
+  getOwnerMfaState,
   resetPasswordForEmail,
   resolveAuthenticatedAccess,
   roleTypeFromMembershipRole,
   signInWithPassword,
   signOut,
   signUpWithPassword,
+  totpQrCodeToDataUrl,
+  verifyTotpChallenge,
+  verifyTotpEnrollment,
 } from '../../src/lib/auth';
-import type { AuthenticatedUser } from '../../src/lib/auth';
+import type {
+  AuthenticatedSession,
+  AuthenticatedUser,
+  OwnerMfaState,
+  TotpEnrollment,
+} from '../../src/lib/auth';
 export type { AuthenticatedUser } from '../../src/lib/auth';
 import { isSupabaseReady } from '../../src/lib/supabase';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { useTheme } from '../../lib/theme-context';
 
-export type AuthScreenType = 'login' | 'register' | 'forgot-password';
+export type AuthScreenType = 'login' | 'register' | 'forgot-password' | 'mfa-setup' | 'mfa-challenge' | 'mfa-error';
+
+export interface AuthSuccessOptions {
+  mfaVerified?: boolean;
+}
 
 interface AuthScreensProps {
   initialScreen?: AuthScreenType;
-  onSuccessAuth: (user: AuthenticatedUser) => void;
+  onSuccessAuth: (user: AuthenticatedUser, options?: AuthSuccessOptions) => void;
   onBackToLanding: () => void;
   userEmail?: string;
+}
+
+interface MfaGateProps {
+  session: AuthenticatedSession;
+  initialState: OwnerMfaState;
+  onSuccessAuth: (user: AuthenticatedUser, options?: AuthSuccessOptions) => void;
+  onLogout: () => Promise<void>;
+}
+
+function friendlyMfaError(error: unknown): string {
+  if (error instanceof AuthAccessError) {
+    if (error.code === 'MFA_VERIFICATION_FAILED') {
+      return 'Não foi possível validar o código. Tente novamente.';
+    }
+    if (error.code === 'MFA_MULTIPLE_FACTORS') {
+      return 'Sua conta possui mais de um autenticador. É necessário selecionar um para continuar.';
+    }
+    if (error.code === 'SESSION_UNAVAILABLE' || error.code === 'SESSION_REQUIRED') {
+      return 'Sua sessão expirou. Entre novamente.';
+    }
+  }
+
+  return 'Não foi possível configurar a autenticação adicional. Tente novamente.';
+}
+
+export function MfaGate({ session, initialState, onSuccessAuth, onLogout }: MfaGateProps) {
+  const preparationStarted = useRef(false);
+  const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const isSetup = initialState.state === 'SETUP_REQUIRED';
+  const factorId = enrollment?.factorId ?? initialState.factorId ?? null;
+
+  useEffect(() => {
+    if (preparationStarted.current || initialState.state === 'ERROR') return;
+    preparationStarted.current = true;
+
+    const prepare = async () => {
+      setIsPreparing(true);
+      try {
+        if (isSetup) {
+          setEnrollment(await beginTotpEnrollment());
+        } else if (initialState.state === 'CHALLENGE_REQUIRED' && initialState.factorId) {
+          setChallengeId(await beginTotpChallenge(initialState.factorId));
+        } else {
+          throw new AuthAccessError(
+            'MFA_UNAVAILABLE',
+            'Não foi possível preparar a autenticação adicional.'
+          );
+        }
+      } catch (error: unknown) {
+        setErrorMessage(friendlyMfaError(error));
+      } finally {
+        setIsPreparing(false);
+      }
+    };
+
+    void prepare();
+  }, [initialState, isSetup]);
+
+  const handleLogout = async () => {
+    setErrorMessage(null);
+    try {
+      await onLogout();
+    } catch {
+      setErrorMessage('Não foi possível encerrar a sessão. Tente novamente.');
+    }
+  };
+
+  const handleCopySecret = async () => {
+    if (!enrollment?.secret || !navigator.clipboard) return;
+
+    try {
+      await navigator.clipboard.writeText(enrollment.secret);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setErrorMessage('Não foi possível copiar a chave.');
+    }
+  };
+
+  const handleVerify = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setErrorMessage(null);
+
+    if (!/^\d{6}$/.test(code) || !factorId) {
+      setErrorMessage('Digite o código de 6 dígitos exibido no seu autenticador.');
+      return;
+    }
+
+    if (!isSetup && !challengeId) {
+      setErrorMessage('Não foi possível iniciar a verificação. Tente novamente.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (isSetup) {
+        await verifyTotpEnrollment(factorId, code);
+      } else {
+        await verifyTotpChallenge(factorId, challengeId as string, code);
+      }
+
+      onSuccessAuth(
+        createAuthenticatedUser(session.user, session.access, 'email'),
+        { mfaVerified: true }
+      );
+    } catch (error: unknown) {
+      setErrorMessage(friendlyMfaError(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const hasBlockingError = initialState.state === 'ERROR';
+
+  return (
+    <div className={styles.authPageWrapper} id="mfa-gate-root">
+      <header className={styles.authNavbar}>
+        <button type="button" className={styles.authNavBackBtn} onClick={handleLogout}>
+          <ArrowLeft size={16} />
+          Sair
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <ThemeToggle variant="compact" id="mfa-header-theme-toggle" />
+          <div className={styles.brandLogoCompact}>
+            <span className={styles.logoBadge}>SURVEY</span>
+            <span className={styles.brandText}>Proteção da conta</span>
+          </div>
+        </div>
+      </header>
+
+      <main className={styles.authContainer}>
+        <div className={styles.authCard} id="mfa-gate-card">
+          <div className={styles.authHeader}>
+            <ShieldCheck size={28} color="#2563eb" aria-hidden="true" />
+            <h1 className={styles.authTitle} style={{ marginTop: '12px' }}>
+              {isSetup ? 'Proteja sua conta' : 'Verifique sua identidade'}
+            </h1>
+            <p className={styles.authSubtitle}>
+              {isSetup
+                ? 'Use um aplicativo autenticador para adicionar uma camada extra de segurança à sua conta de proprietário.'
+                : 'Digite o código de 6 dígitos do seu aplicativo autenticador para continuar.'}
+            </p>
+          </div>
+
+          {hasBlockingError && (
+            <div className={`${styles.alertBox} ${styles.alertError}`} role="alert">
+              <AlertCircle size={18} />
+              <span>Sua conta possui mais de um autenticador. É necessário selecionar um para continuar.</span>
+            </div>
+          )}
+
+          {errorMessage && !hasBlockingError && (
+            <div className={`${styles.alertBox} ${styles.alertError}`} role="alert" aria-live="polite">
+              <AlertCircle size={18} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {!hasBlockingError && isSetup && enrollment && (
+            <div style={{ display: 'grid', gap: '16px', marginBottom: '20px' }}>
+              <ol style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '13px', lineHeight: 1.7 }}>
+                <li>Escaneie o QR Code no seu autenticador.</li>
+                <li>Digite o código de 6 dígitos.</li>
+                <li>Confirme para continuar.</li>
+              </ol>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '14px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#fff' }}>
+                <img
+                  src={totpQrCodeToDataUrl(enrollment.qrCode)}
+                  alt="QR Code para configurar o autenticador SURVEY"
+                  width={184}
+                  height={184}
+                  style={{ display: 'block', maxWidth: '100%' }}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel} htmlFor="mfa-manual-secret">
+                  Não consegue escanear? Use a chave manual
+                </label>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    id="mfa-manual-secret"
+                    className={styles.textInput}
+                    type="password"
+                    value={enrollment.secret}
+                    readOnly
+                    aria-label="Chave manual do autenticador"
+                    style={{ paddingLeft: '14px' }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggleBtn}
+                    onClick={handleCopySecret}
+                    aria-label="Copiar chave manual"
+                    style={{ position: 'static', flexShrink: 0, padding: '10px' }}
+                  >
+                    {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!hasBlockingError && !isSetup && (
+            <div style={{ marginBottom: '18px', padding: '12px', borderRadius: '8px', background: '#eff6ff', color: '#1e40af', fontSize: '13px' }}>
+              Autenticador SURVEY ativo para esta conta.
+            </div>
+          )}
+
+          {!hasBlockingError && (isPreparing || (!isSetup && !challengeId)) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '13px', marginBottom: '16px' }}>
+              <Loader2 size={16} aria-hidden="true" />
+              Preparando a verificação...
+            </div>
+          )}
+
+          {!hasBlockingError && !isPreparing && (
+            <form onSubmit={handleVerify}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} htmlFor="mfa-code">
+                  Código do autenticador
+                </label>
+                <input
+                  id="mfa-code"
+                  type="text"
+                  className={styles.textInput}
+                  value={code}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  placeholder="000000"
+                  required
+                  style={{ paddingLeft: '14px', letterSpacing: '0.22em', textAlign: 'center' }}
+                />
+              </div>
+              <button type="submit" className={styles.submitBtn} disabled={isSubmitting || !factorId || (!isSetup && !challengeId)}>
+                {isSubmitting ? 'Validando...' : isSetup ? 'Ativar autenticação' : 'Verificar código'}
+                <ArrowRight size={16} />
+              </button>
+            </form>
+          )}
+
+          <div className={styles.authCardFooter}>
+            <button type="button" className={styles.linkBtn} onClick={handleLogout}>
+              Sair
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
 
 export function AuthScreens({
@@ -76,6 +353,8 @@ export function AuthScreens({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingMfaSession, setPendingMfaSession] = useState<AuthenticatedSession | null>(null);
+  const [pendingMfaState, setPendingMfaState] = useState<OwnerMfaState | null>(null);
 
   // Modal de Simulação Google Account Chooser
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -93,6 +372,12 @@ export function AuthScreens({
     if (error instanceof AuthAccessError) {
       if (error.code === 'AUTHENTICATION_UNAVAILABLE') {
         return 'A autenticação está temporariamente indisponível. Tente novamente mais tarde.';
+      }
+      if (error.code === 'MFA_VERIFICATION_FAILED') {
+        return 'Não foi possível validar o código. Tente novamente.';
+      }
+      if (error.code === 'MFA_UNAVAILABLE' || error.code === 'MFA_REQUIRED') {
+        return 'Não foi possível concluir a autenticação adicional. Tente novamente.';
       }
       return 'Não foi possível confirmar seu acesso. Verifique suas credenciais ou fale com o administrador da organização.';
     }
@@ -133,7 +418,22 @@ export function AuthScreens({
       }
 
       const access = await resolveAuthenticatedAccess(authData.user.id);
-      onSuccessAuth(createAuthenticatedUser(authData.user, access, 'email'));
+      const authenticatedSession: AuthenticatedSession = { user: authData.user, access };
+      const ownerMfaState = await getOwnerMfaState(access.role);
+
+      if (ownerMfaState.state === 'READY' || ownerMfaState.state === 'NOT_REQUIRED') {
+        onSuccessAuth(createAuthenticatedUser(authData.user, access, 'email'), { mfaVerified: access.role === 'OWNER' });
+      } else {
+        setPendingMfaSession(authenticatedSession);
+        setPendingMfaState(ownerMfaState);
+        setCurrentScreen(
+          ownerMfaState.state === 'SETUP_REQUIRED'
+            ? 'mfa-setup'
+            : ownerMfaState.state === 'CHALLENGE_REQUIRED'
+              ? 'mfa-challenge'
+              : 'mfa-error'
+        );
+      }
     } catch (error: unknown) {
       if (error instanceof AuthAccessError && error.code !== 'AUTHENTICATION_UNAVAILABLE') {
         await signOut().catch(() => undefined);
@@ -141,6 +441,18 @@ export function AuthScreens({
       setErrorMessage(friendlyAuthError(error));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleMfaLogout = async () => {
+    try {
+      await signOut();
+      setPendingMfaSession(null);
+      setPendingMfaState(null);
+      setCurrentScreen('login');
+      onBackToLanding();
+    } catch {
+      setErrorMessage('Não foi possível encerrar a sessão. Tente novamente.');
     }
   };
 
@@ -321,6 +633,21 @@ export function AuthScreens({
       });
     }, 450);
   };
+
+  if (currentScreen.startsWith('mfa-') && pendingMfaSession && pendingMfaState) {
+    return (
+      <MfaGate
+        session={pendingMfaSession}
+        initialState={pendingMfaState}
+        onSuccessAuth={(user, options) => {
+          setPendingMfaSession(null);
+          setPendingMfaState(null);
+          onSuccessAuth(user, options);
+        }}
+        onLogout={handleMfaLogout}
+      />
+    );
+  }
 
   return (
     <div className={styles.authPageWrapper} id="auth-page-root">

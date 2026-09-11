@@ -34,6 +34,25 @@ export interface AuthenticatedSession {
   access: MembershipAccess;
 }
 
+export type MfaGateState =
+  | 'NOT_REQUIRED'
+  | 'READY'
+  | 'SETUP_REQUIRED'
+  | 'CHALLENGE_REQUIRED'
+  | 'ERROR';
+
+export interface OwnerMfaState {
+  state: MfaGateState;
+  factorId?: string;
+}
+
+export interface TotpEnrollment {
+  factorId: string;
+  qrCode: string;
+  secret: string;
+  uri: string;
+}
+
 export type AuthAccessErrorCode =
   | 'SESSION_REQUIRED'
   | 'SESSION_UNAVAILABLE'
@@ -41,7 +60,11 @@ export type AuthAccessErrorCode =
   | 'ACCESS_DENIED_AMBIGUOUS_MEMBERSHIP'
   | 'ACCESS_DENIED_SUSPENDED_MEMBERSHIP'
   | 'AUTHORIZATION_UNAVAILABLE'
-  | 'AUTHENTICATION_UNAVAILABLE';
+  | 'AUTHENTICATION_UNAVAILABLE'
+  | 'MFA_REQUIRED'
+  | 'MFA_UNAVAILABLE'
+  | 'MFA_MULTIPLE_FACTORS'
+  | 'MFA_VERIFICATION_FAILED';
 
 export class AuthAccessError extends Error {
   constructor(public readonly code: AuthAccessErrorCode, message: string) {
@@ -198,6 +221,183 @@ export async function getAuthenticatedSession(): Promise<AuthenticatedSession> {
 
   const access = await resolveAuthenticatedAccess(userData.user.id);
   return { user: userData.user, access };
+}
+
+async function requireAal2(): Promise<void> {
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+  if (error) {
+    throw new AuthAccessError(
+      'MFA_UNAVAILABLE',
+      'Não foi possível validar a autenticação adicional.'
+    );
+  }
+
+  if (data.currentLevel !== 'aal2') {
+    throw new AuthAccessError(
+      'MFA_REQUIRED',
+      'A autenticação adicional ainda não foi confirmada.'
+    );
+  }
+}
+
+export async function getOwnerMfaState(role: MembershipRole): Promise<OwnerMfaState> {
+  if (role !== 'OWNER') {
+    return { state: 'NOT_REQUIRED' };
+  }
+
+  const { data: assuranceData, error: assuranceError } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+  if (assuranceError) {
+    throw new AuthAccessError(
+      'MFA_UNAVAILABLE',
+      'Não foi possível validar a autenticação adicional.'
+    );
+  }
+
+  if (assuranceData.currentLevel === 'aal2') {
+    return { state: 'READY' };
+  }
+
+  if (assuranceData.currentLevel !== 'aal1') {
+    throw new AuthAccessError(
+      'MFA_UNAVAILABLE',
+      'Não foi possível confirmar o nível de autenticação.'
+    );
+  }
+
+  const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
+  if (factorsError) {
+    throw new AuthAccessError(
+      'MFA_UNAVAILABLE',
+      'Não foi possível consultar os autenticadores da conta.'
+    );
+  }
+
+  const verifiedTotpFactors = (factorsData?.all ?? []).filter(
+    (factor) => factor.factor_type === 'totp' && factor.status === 'verified'
+  );
+
+  if (verifiedTotpFactors.length === 0) {
+    return { state: 'SETUP_REQUIRED' };
+  }
+
+  if (verifiedTotpFactors.length > 1) {
+    return { state: 'ERROR' };
+  }
+
+  return { state: 'CHALLENGE_REQUIRED', factorId: verifiedTotpFactors[0].id };
+}
+
+export async function beginTotpEnrollment(): Promise<TotpEnrollment> {
+  const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
+  if (factorsError) {
+    throw new AuthAccessError(
+      'MFA_UNAVAILABLE',
+      'Não foi possível consultar os autenticadores da conta.'
+    );
+  }
+
+  const unverifiedTotpFactors = (factorsData?.all ?? []).filter(
+    (factor) => factor.factor_type === 'totp' && factor.status === 'unverified'
+  );
+
+  for (const factor of unverifiedTotpFactors) {
+    const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+    if (error) {
+      throw new AuthAccessError(
+        'MFA_UNAVAILABLE',
+        'Não foi possível preparar a autenticação adicional.'
+      );
+    }
+  }
+
+  const { data, error } = await supabase.auth.mfa.enroll({
+    factorType: 'totp',
+    friendlyName: 'SURVEY',
+  });
+
+  if (error || !data?.id || !data.totp) {
+    throw new AuthAccessError(
+      'MFA_UNAVAILABLE',
+      'Não foi possível configurar a autenticação adicional.'
+    );
+  }
+
+  return {
+    factorId: data.id,
+    qrCode: data.totp.qr_code,
+    secret: data.totp.secret,
+    uri: data.totp.uri,
+  };
+}
+
+export function totpQrCodeToDataUrl(qrCode: string): string {
+  if (qrCode.startsWith('data:')) return qrCode;
+  return `data:image/svg+xml;utf-8,${encodeURIComponent(qrCode)}`;
+}
+
+export async function verifyTotpEnrollment(factorId: string, code: string): Promise<void> {
+  const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+    factorId,
+  });
+
+  if (challengeError || !challengeData?.id) {
+    throw new AuthAccessError(
+      'MFA_VERIFICATION_FAILED',
+      'Não foi possível validar o código. Tente novamente.'
+    );
+  }
+
+  const { error: verifyError } = await supabase.auth.mfa.verify({
+    factorId,
+    challengeId: challengeData.id,
+    code,
+  });
+
+  if (verifyError) {
+    throw new AuthAccessError(
+      'MFA_VERIFICATION_FAILED',
+      'Não foi possível validar o código. Tente novamente.'
+    );
+  }
+
+  await requireAal2();
+}
+
+export async function beginTotpChallenge(factorId: string): Promise<string> {
+  const { data, error } = await supabase.auth.mfa.challenge({ factorId });
+
+  if (error || !data?.id) {
+    throw new AuthAccessError(
+      'MFA_VERIFICATION_FAILED',
+      'Não foi possível iniciar a verificação. Tente novamente.'
+    );
+  }
+
+  return data.id;
+}
+
+export async function verifyTotpChallenge(
+  factorId: string,
+  challengeId: string,
+  code: string
+): Promise<void> {
+  const { error } = await supabase.auth.mfa.verify({
+    factorId,
+    challengeId,
+    code,
+  });
+
+  if (error) {
+    throw new AuthAccessError(
+      'MFA_VERIFICATION_FAILED',
+      'Não foi possível validar o código. Tente novamente.'
+    );
+  }
+
+  await requireAal2();
 }
 
 export function createAuthenticatedUser(

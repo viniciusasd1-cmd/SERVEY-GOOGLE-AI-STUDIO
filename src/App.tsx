@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import LandingPage from '../app/page';
 import { TemplateSelector } from '../components/inspection/template-selector';
 import { ChecklistScreen } from '../components/inspection/checklist-screen';
-import { AuthScreens, AuthenticatedUser, AuthScreenType } from '../components/auth/auth-screens';
+import { AuthScreens, AuthenticatedUser, AuthScreenType, AuthSuccessOptions, MfaGate } from '../components/auth/auth-screens';
 import { TeamManagement } from '../components/team/team-management';
 import { OwnerDashboard } from '../components/owner/owner-dashboard';
 import { INITIAL_INSPECTION_MOCK, MOCK_TEMPLATES } from '../lib/mock-inspection-data';
@@ -13,11 +13,13 @@ import {
   AuthAccessError,
   createAuthenticatedUser,
   getAuthenticatedSession,
+  getOwnerMfaState,
   signOut,
 } from './lib/auth';
+import type { AuthenticatedSession, OwnerMfaState } from './lib/auth';
 import { isSupabaseReady } from './lib/supabase';
 
-type CurrentRoute = 'landing' | 'login' | 'register' | 'forgot-password' | 'dashboard' | 'team' | 'template' | 'checklist';
+type CurrentRoute = 'landing' | 'login' | 'register' | 'forgot-password' | 'mfa-setup' | 'mfa-challenge' | 'mfa-error' | 'dashboard' | 'team' | 'template' | 'checklist';
 
 function isManagementRole(role: AuthenticatedUser['membershipRole']): boolean {
   return role === 'OWNER' || role === 'ADMIN';
@@ -33,6 +35,8 @@ export default function App() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('tpl-completa');
   const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
   const [authActionError, setAuthActionError] = useState<string | null>(null);
+  const [mfaSession, setMfaSession] = useState<AuthenticatedSession | null>(null);
+  const [mfaState, setMfaState] = useState<OwnerMfaState | null>(null);
 
   // Controle de ciclo de teste único (Ambiente Sandbox)
   const [testCycleCompleted, setTestCycleCompleted] = useState<boolean>(false);
@@ -51,11 +55,26 @@ export default function App() {
         const authenticatedSession = await getAuthenticatedSession();
         if (!active) return;
 
-        const restoredUser = createAuthenticatedUser(
-          authenticatedSession.user,
-          authenticatedSession.access,
-          'email'
-        );
+        const restoredMfaState = await getOwnerMfaState(authenticatedSession.access.role);
+        if (
+          restoredMfaState.state !== 'READY' &&
+          restoredMfaState.state !== 'NOT_REQUIRED'
+        ) {
+          setMfaSession(authenticatedSession);
+          setMfaState(restoredMfaState);
+          setCurrentRoute(
+            restoredMfaState.state === 'SETUP_REQUIRED'
+              ? 'mfa-setup'
+              : restoredMfaState.state === 'CHALLENGE_REQUIRED'
+                ? 'mfa-challenge'
+                : 'mfa-error'
+          );
+          return;
+        }
+
+        const restoredUser = createAuthenticatedUser(authenticatedSession.user, authenticatedSession.access, 'email');
+        setMfaSession(null);
+        setMfaState(null);
         setCurrentUser(restoredUser);
         setInspection((prev) => ({
           ...prev,
@@ -107,7 +126,19 @@ export default function App() {
   };
 
   // Sucesso na autenticação (Login, Cadastro, Google ou Estado de Testes)
-  const handleAuthSuccess = (user: AuthenticatedUser) => {
+  const handleAuthSuccess = (user: AuthenticatedUser, options: AuthSuccessOptions = {}) => {
+    if (user.membershipRole === 'OWNER' && !options.mfaVerified) {
+      setCurrentUser(null);
+      setMfaSession(null);
+      setMfaState(null);
+      setAuthActionError('A autenticação adicional é obrigatória para contas de proprietário.');
+      void signOut().catch(() => undefined);
+      setCurrentRoute('login');
+      return;
+    }
+
+    setMfaSession(null);
+    setMfaState(null);
     setCurrentUser(user);
 
     if (user.isTestMode) {
@@ -173,6 +204,8 @@ export default function App() {
     try {
       await signOut();
       setCurrentUser(null);
+      setMfaSession(null);
+      setMfaState(null);
       setTestCycleCompleted(false);
       setShowTestLimitModal(false);
       setCurrentRoute('landing');
@@ -296,6 +329,17 @@ export default function App() {
                 onBackToLanding={() => setCurrentRoute('landing')}
               />
             )}
+
+            {(currentRoute === 'mfa-setup' || currentRoute === 'mfa-challenge' || currentRoute === 'mfa-error') &&
+              mfaSession &&
+              mfaState && (
+                <MfaGate
+                  session={mfaSession}
+                  initialState={mfaState}
+                  onSuccessAuth={handleAuthSuccess}
+                  onLogout={handleLogout}
+                />
+              )}
 
             {currentRoute === 'dashboard' && currentUser && isManagementRole(currentUser.membershipRole) && (
               <OwnerDashboard
