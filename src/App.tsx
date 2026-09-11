@@ -65,7 +65,7 @@ export default function App() {
         },
         templateId: 'tpl-completa',
         templateName: 'Vistoria Completa (Degustação)',
-        responsibleInspector: `${user.name} - Modo de Testes (1 Ciclo)`,
+        operatorName: `${user.name} - Modo de Testes (1 Ciclo)`,
         status: 'IN_PROGRESS',
         startedAt:
           new Date().toLocaleDateString('pt-BR') +
@@ -92,7 +92,7 @@ export default function App() {
     // Atualiza o operador responsável da vistoria com os dados autenticados do usuário regular
     setInspection((prev) => ({
       ...prev,
-      responsibleInspector: `${user.name} (${user.company || 'Operador'})`,
+      operatorName: `${user.name} (${user.company || 'Operador'})`,
     }));
 
     // SEPARAÇÃO DE FLUXOS POR PAPEL (Diretriz do Usuário):
@@ -610,14 +610,14 @@ export default function App() {
                 onStartNewInspection={() => {
                   setInspection((prev) => ({
                     ...prev,
-                    responsibleInspector: `${currentUser?.name || 'Carlos Mendes'} (Vistoria Gerencial)`,
+                    operatorName: `${currentUser?.name || 'Carlos Mendes'} (Vistoria Gerencial)`,
                   }));
                   setCurrentRoute('template');
                 }}
                 onSimulateOperator={() => {
                   setInspection((prev) => ({
                     ...prev,
-                    responsibleInspector: 'Juliana Silva (Operadora de Pátio)',
+                    operatorName: 'Juliana Silva (Operadora de Pátio)',
                   }));
                   setCurrentRoute('template');
                 }}
@@ -637,7 +637,7 @@ export default function App() {
                 onStartInspectionForUser={(operatorName) => {
                   setInspection((prev) => ({
                     ...prev,
-                    responsibleInspector: `${operatorName} (${currentUser?.company || 'Locafrotas'})`,
+                    operatorName: `${operatorName} (${currentUser?.company || 'Locafrotas'})`,
                   }));
                   setCurrentRoute('template');
                 }}

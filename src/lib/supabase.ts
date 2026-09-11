@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const defaultUrl = 'https://vzdfqeazonyemqhnwbae.supabase.co';
-const defaultPublishableKey = 'sb_publishable_IHHGD_lV39_fH6OIyBckVg_odLxnUsL';
+const defaultUrl = 'https://placeholder.supabase.co';
+const defaultPublishableKey = 'placeholder-publishable-key';
 
 export function getSupabaseUrl(): string {
   return (
@@ -32,7 +32,13 @@ export function setCustomPublishableKey(key: string) {
 export function isSupabaseReady(): boolean {
   const url = getSupabaseUrl();
   const key = getSupabasePublishableKey();
-  return Boolean(url && key && !key.startsWith('placeholder'));
+  return Boolean(
+    url &&
+      key &&
+      url !== defaultUrl &&
+      key !== defaultPublishableKey &&
+      !key.startsWith('placeholder')
+  );
 }
 
 export const isSupabaseConfigured = isSupabaseReady();
