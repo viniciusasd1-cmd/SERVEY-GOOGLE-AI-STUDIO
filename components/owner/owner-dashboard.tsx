@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import {
-  LayoutDashboard,
   ClipboardList,
   Users,
   ShieldCheck,
@@ -55,8 +54,6 @@ import {
 import { generateInspectionPDF } from '../../src/lib/pdf-generator';
 import { MOCK_TEMPLATES } from '../../lib/mock-inspection-data';
 import { SendPdfModal } from '../inspection/send-pdf-modal';
-import { useTheme } from '../../lib/theme-context';
-import { ThemeToggle } from '../ui/theme-toggle';
 import styles from './owner-dashboard.module.css';
 
 type OwnerTab = 'dashboard' | 'history' | 'team' | 'access';
@@ -102,7 +99,6 @@ export function OwnerDashboard({
   onSimulateOperator,
   initialTab = 'dashboard',
 }: OwnerDashboardProps) {
-  const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<OwnerTab>(initialTab);
   const [activeSidebarItem, setActiveSidebarItem] = useState<OwnerSidebarItemId>(
     initialTab === 'history' ? 'history' : initialTab === 'team' ? 'branches' : initialTab === 'access' ? 'settings' : 'home'
@@ -232,8 +228,8 @@ export function OwnerDashboard({
       className={styles.ownerDashboardRoot}
       style={{
         minHeight: '100vh',
-        backgroundColor: isDark ? '#090d16' : '#f8fafc',
-        color: isDark ? '#f8fafc' : '#0f172a',
+        backgroundColor: '#f8fafc',
+        color: '#0f172a',
         display: 'flex',
         flexDirection: 'column',
         transition: 'background-color 0.2s ease',
@@ -291,7 +287,18 @@ export function OwnerDashboard({
               <strong>{currentUser.name}</strong>
               <span>Proprietário</span>
             </div>
-            <ShieldCheck size={16} className={styles.sidebarUserStatus} aria-label="Conta protegida" />
+            <div className={styles.sidebarUserActions}>
+              <ShieldCheck size={16} className={styles.sidebarUserStatus} aria-label="Conta protegida" />
+              <button
+                type="button"
+                className={styles.sidebarLogoutButton}
+                onClick={onLogout}
+                aria-label="Sair do dashboard"
+                title="Sair"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -312,12 +319,12 @@ export function OwnerDashboard({
         id="owner-header"
         className={styles.ownerDashboardHeader}
         style={{
-          backgroundColor: isDark ? '#0f172a' : '#ffffff',
-          borderBottom: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
+          backgroundColor: '#ffffff',
+          borderBottom: '1px solid #e2e8f0',
           position: 'sticky',
           top: 0,
           zIndex: 40,
-          boxShadow: isDark ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 3px rgba(0,0,0,0.04)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           transition: 'background-color 0.2s ease, border-color 0.2s ease',
         }}
       >
@@ -333,7 +340,7 @@ export function OwnerDashboard({
             gap: '12px',
           }}
         >
-          {/* Identificação da Empresa e Logo */}
+          {/* Contexto da página atual */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <button
               type="button"
@@ -344,68 +351,31 @@ export function OwnerDashboard({
             >
               <Menu size={20} />
             </button>
-            <div
-              style={{
-                backgroundColor: isDark ? '#1e293b' : '#0f172a',
-                color: '#ffffff',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                fontWeight: 800,
-                fontSize: '14px',
-                letterSpacing: '1px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                border: isDark ? '1px solid #334155' : 'none',
-              }}
-            >
-              <span>SURVEY</span>
-              <span
-                style={{
-                  backgroundColor: '#2563eb',
-                  color: '#ffffff',
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                }}
-              >
-                PROPRIETÁRIO
-              </span>
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h1 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
-                  {currentUser.company || 'Locafrotas Gestão de Veículos'}
+            <div className={styles.ownerHeaderTitleBlock}>
+              <div className={styles.ownerHeaderTitleRow}>
+                <h1
+                  className={styles.ownerHeaderTitle}
+                  style={{ color: '#0f172a' }}
+                >
+                  Início
                 </h1>
                 <span
+                  className={styles.ownerPlanBadge}
                   style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: isDark ? '#86efac' : '#166534',
-                    backgroundColor: isDark ? 'rgba(22, 101, 52, 0.25)' : '#f0fdf4',
-                    border: isDark ? '1px solid rgba(134, 239, 172, 0.3)' : '1px solid #bbf7d0',
-                    padding: '2px 7px',
-                    borderRadius: '999px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
+                    color: '#166534',
+                    backgroundColor: '#f0fdf4',
+                    borderColor: '#bbf7d0',
                   }}
                 >
-                  <span
-                    style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      backgroundColor: '#16a34a',
-                    }}
-                  />
+                  <span className={styles.ownerPlanDot} />
                   Plano Ativo
                 </span>
               </div>
-              <p style={{ margin: 0, fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b' }}>
-                Painel Gerencial • Administrador: <strong style={{ color: isDark ? '#cbd5e1' : 'inherit' }}>{currentUser.name}</strong>
+              <p
+                className={styles.ownerHeaderSubtitle}
+                style={{ color: '#64748b' }}
+              >
+                {currentUser.company || 'SURVEY'} • {currentUser.name}
               </p>
             </div>
           </div>
@@ -413,20 +383,19 @@ export function OwnerDashboard({
           {/* Ações Rápidas no Topo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {/* Alternador de Tema Claro / Escuro */}
-            <ThemeToggle variant="compact" id="owner-header-theme-toggle" />
-
             {/* Botão de Simulação do Operador */}
             <button
               type="button"
               id="btn-simulate-operator"
+              className={styles.ownerHeaderSecondaryAction}
               onClick={onSimulateOperator}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-                border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                color: isDark ? '#e2e8f0' : '#334155',
+                backgroundColor: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                color: '#334155',
                 borderRadius: '8px',
                 padding: '7px 12px',
                 fontSize: '12px',
@@ -444,6 +413,7 @@ export function OwnerDashboard({
             <button
               type="button"
               id="btn-owner-new-inspection"
+              className={styles.ownerHeaderPrimaryAction}
               onClick={onStartNewInspection}
               style={{
                 display: 'inline-flex',
@@ -465,159 +435,9 @@ export function OwnerDashboard({
               <span>Nova Vistoria</span>
             </button>
 
-            {/* Botão de Sair */}
-            <button
-              type="button"
-              id="btn-owner-logout"
-              onClick={onLogout}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                backgroundColor: 'transparent',
-                border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                color: isDark ? '#94a3b8' : '#64748b',
-                borderRadius: '8px',
-                padding: '7px 10px',
-                fontSize: '12px',
-                cursor: 'pointer',
-              }}
-              title="Encerrar sessão administrativa"
-            >
-              <LogOut size={13} />
-              <span>Sair</span>
-            </button>
           </div>
         </div>
 
-        {/* Barra de Navegação entre Módulos / Abas */}
-        <div
-          style={{
-            maxWidth: '1280px',
-            margin: '0 auto',
-            padding: '0 20px',
-            display: 'flex',
-            gap: '24px',
-            overflowX: 'auto',
-          }}
-        >
-          <button
-            type="button"
-            id="owner-tab-dashboard"
-            onClick={() => handleExistingTabChange('dashboard', 'home')}
-            style={{
-              padding: '12px 2px',
-              border: 'none',
-              backgroundColor: 'transparent',
-              fontSize: '13px',
-              fontWeight: activeTab === 'dashboard' ? 700 : 500,
-              color: activeTab === 'dashboard' ? (isDark ? '#60a5fa' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b'),
-              borderBottom: activeTab === 'dashboard' ? (isDark ? '2.5px solid #60a5fa' : '2.5px solid #2563eb') : '2.5px solid transparent',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <LayoutDashboard size={15} />
-            Visão Geral (Dashboard)
-          </button>
-
-          <button
-            type="button"
-            id="owner-tab-history"
-            onClick={() => handleExistingTabChange('history', 'history')}
-            style={{
-              padding: '12px 2px',
-              border: 'none',
-              backgroundColor: 'transparent',
-              fontSize: '13px',
-              fontWeight: activeTab === 'history' ? 700 : 500,
-              color: activeTab === 'history' ? (isDark ? '#60a5fa' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b'),
-              borderBottom: activeTab === 'history' ? (isDark ? '2.5px solid #60a5fa' : '2.5px solid #2563eb') : '2.5px solid transparent',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <ClipboardList size={15} />
-            Histórico de Vistorias
-            <span
-              style={{
-                fontSize: '10px',
-                backgroundColor: isDark ? 'rgba(37, 99, 235, 0.2)' : '#eff6ff',
-                color: isDark ? '#93c5fd' : '#2563eb',
-                padding: '2px 6px',
-                borderRadius: '10px',
-                fontWeight: 700,
-              }}
-            >
-              {inspectionsList.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            id="owner-tab-team"
-            onClick={() => handleExistingTabChange('team', 'branches')}
-            style={{
-              padding: '12px 2px',
-              border: 'none',
-              backgroundColor: 'transparent',
-              fontSize: '13px',
-              fontWeight: activeTab === 'team' ? 700 : 500,
-              color: activeTab === 'team' ? (isDark ? '#60a5fa' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b'),
-              borderBottom: activeTab === 'team' ? (isDark ? '2.5px solid #60a5fa' : '2.5px solid #2563eb') : '2.5px solid transparent',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <Users size={15} />
-            Equipe & Licenças
-          </button>
-
-          <button
-            type="button"
-            id="owner-tab-access"
-            onClick={() => handleExistingTabChange('access', 'settings')}
-            style={{
-              padding: '12px 2px',
-              border: 'none',
-              backgroundColor: 'transparent',
-              fontSize: '13px',
-              fontWeight: activeTab === 'access' ? 700 : 500,
-              color: activeTab === 'access' ? (isDark ? '#60a5fa' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b'),
-              borderBottom: activeTab === 'access' ? (isDark ? '2.5px solid #60a5fa' : '2.5px solid #2563eb') : '2.5px solid transparent',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <ShieldCheck size={15} />
-            Controles de Logins & Acessos
-            <span
-              style={{
-                fontSize: '10px',
-                backgroundColor: isDark ? 'rgba(22, 163, 74, 0.2)' : '#f0fdf4',
-                color: isDark ? '#86efac' : '#166534',
-                border: isDark ? '1px solid rgba(134, 239, 172, 0.25)' : '1px solid #bbf7d0',
-                padding: '1px 5px',
-                borderRadius: '10px',
-                fontWeight: 700,
-              }}
-            >
-              3 Online
-            </span>
-          </button>
-        </div>
       </header>
 
       {/* Notificação / Toast de Segurança */}

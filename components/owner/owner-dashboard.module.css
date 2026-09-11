@@ -180,8 +180,38 @@
 }
 
 .sidebarUserStatus {
-  margin-left: auto;
   color: #60a5fa;
+}
+
+.sidebarUserActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.sidebarLogoutButton {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.sidebarLogoutButton:hover {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(248, 113, 113, 0.18);
+}
+
+.sidebarLogoutButton:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.7);
+  outline-offset: 2px;
 }
 
 .sidebarCloseButton,
@@ -216,6 +246,58 @@
 
 .ownerDashboardHeader {
   width: calc(100% - var(--owner-sidebar-width));
+}
+
+.ownerHeaderTitleBlock {
+  min-width: 0;
+}
+
+.ownerHeaderTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ownerHeaderTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.ownerHeaderSubtitle {
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ownerPlanBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  color: #166534;
+  font-size: 10px;
+  font-weight: 650;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+}
+
+.ownerPlanDot {
+  width: 5px;
+  height: 5px;
+  background: #16a34a;
+  border-radius: 50%;
+}
+
+.ownerHeaderSecondaryAction,
+.ownerHeaderPrimaryAction {
+  white-space: nowrap;
 }
 
 .ownerDashboardToast {
@@ -284,6 +366,29 @@
   .ownerDashboardHeader > div:first-child > div:first-of-type {
     min-width: 0;
   }
+
+  .ownerDashboardHeader > div:first-child {
+    padding: 10px 14px !important;
+    gap: 8px !important;
+  }
+
+  .ownerDashboardHeader > div:first-child > div:last-child {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .ownerHeaderTitle {
+    font-size: 16px;
+  }
+
+  .ownerHeaderSecondaryAction {
+    padding: 7px !important;
+  }
+
+  .ownerHeaderSecondaryAction span {
+    display: none;
+  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
