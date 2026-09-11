@@ -1,6 +1,12 @@
 .ownerDashboardRoot {
   --owner-sidebar-width: 260px;
+  --owner-text-primary: #0f172a;
+  --owner-text-secondary: #64748b;
+  --owner-surface: #ffffff;
+  --owner-border: #dbe3ef;
+  --owner-accent: #2563eb;
   overflow-x: hidden;
+  color: var(--owner-text-primary);
 }
 
 .ownerSidebar {
@@ -309,6 +315,570 @@
   max-width: none !important;
 }
 
+.dashboardOverview {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dashboardOverviewIntro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 4px 2px 2px;
+}
+
+.dashboardOverviewEyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.dashboardOverviewTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(22px, 2.2vw, 29px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.dashboardOverviewSubtitle {
+  max-width: 600px;
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dashboardOverviewActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dashboardActionPrimary,
+.dashboardActionSecondary,
+.dashboardPanelAction,
+.dashboardAlertAction,
+.dashboardInspectionAction {
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.dashboardActionPrimary,
+.dashboardActionSecondary {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 13px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboardActionPrimary {
+  color: #ffffff;
+  background: #2563eb;
+  border: 1px solid #2563eb;
+  box-shadow: 0 5px 12px rgba(37, 99, 235, 0.14);
+}
+
+.dashboardActionPrimary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.dashboardActionSecondary {
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.dashboardActionSecondary:hover {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.dashboardActionPrimary:focus-visible,
+.dashboardActionSecondary:focus-visible,
+.dashboardPanelAction:focus-visible,
+.dashboardAlertAction:focus-visible,
+.dashboardInspectionAction:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.65);
+  outline-offset: 2px;
+}
+
+.dashboardKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboardKpiCard,
+.dashboardPanel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
+}
+
+.dashboardKpiCard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.dashboardKpiTop,
+.dashboardPanelHeader,
+.dashboardBranchHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboardKpiLabel,
+.dashboardPanelMeta,
+.dashboardKpiDetail,
+.dashboardInspectionMeta,
+.dashboardInspectionTime,
+.dashboardAlertMeta,
+.dashboardTeamMeta,
+.dashboardBranchMetric span {
+  color: #64748b;
+}
+
+.dashboardKpiLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.dashboardKpiIcon {
+  display: inline-flex;
+  width: 33px;
+  height: 33px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 9px;
+}
+
+.dashboardKpiIconBlue {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.dashboardKpiIconSlate {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.dashboardKpiIconGreen {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.dashboardKpiIconAmber {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.dashboardKpiValue {
+  color: #0f172a;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.dashboardKpiDetail {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboardContentGrid,
+.dashboardLowerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboardPanel {
+  min-width: 0;
+  padding: 18px;
+}
+
+.dashboardPanelTitle {
+  margin: 0;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.dashboardPanelMeta {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.dashboardPanelAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 0;
+  color: #2563eb;
+  font-size: 11.5px;
+  font-weight: 750;
+  background: transparent;
+  border: 0;
+  white-space: nowrap;
+}
+
+.dashboardPanelAction:hover {
+  color: #1d4ed8;
+}
+
+.dashboardPanelCount {
+  padding: 4px 8px;
+  color: #92400e;
+  font-size: 10.5px;
+  font-weight: 750;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.dashboardInspectionList,
+.dashboardAlerts,
+.dashboardTeamList {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.dashboardInspectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+}
+
+.dashboardInspectionIdentity,
+.dashboardInspectionMetaGroup,
+.dashboardTeamRow,
+.dashboardTeamStatusBlock {
+  display: flex;
+  align-items: center;
+}
+
+.dashboardInspectionIdentity {
+  min-width: 0;
+  gap: 10px;
+}
+
+.dashboardPlate {
+  padding: 4px 7px;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: #0f172a;
+  border-radius: 5px;
+}
+
+.dashboardInspectionMain,
+.dashboardAlertBody,
+.dashboardTeamMain {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dashboardInspectionVehicle,
+.dashboardAlertTitle,
+.dashboardTeamName,
+.dashboardBranchName {
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboardInspectionMeta,
+.dashboardInspectionTime,
+.dashboardAlertMeta,
+.dashboardTeamMeta {
+  overflow: hidden;
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboardInspectionMetaGroup {
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.dashboardStatus {
+  padding: 4px 7px;
+  font-size: 10px;
+  font-weight: 750;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.dashboardStatusSuccess {
+  color: #166534;
+  background: #f0fdf4;
+}
+
+.dashboardStatusWarning {
+  color: #92400e;
+  background: #fffbeb;
+}
+
+.dashboardStatusInfo {
+  color: #1e40af;
+  background: #eff6ff;
+}
+
+.dashboardStatusDanger {
+  color: #991b1b;
+  background: #fef2f2;
+}
+
+.dashboardInspectionAction {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  color: #15803d;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+}
+
+.dashboardInspectionAction:hover {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.dashboardAlertRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+}
+
+.dashboardAlertIcon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.dashboardAlertIconWarning {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.dashboardAlertIconInfo {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.dashboardAlertAction {
+  padding: 5px 8px;
+  color: #2563eb;
+  font-size: 10.5px;
+  font-weight: 750;
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.dashboardAlertAction:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.dashboardAlertAction:disabled {
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.dashboardTeamRow {
+  min-width: 0;
+  gap: 9px;
+  padding: 2px 0;
+}
+
+.dashboardAvatar {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 800;
+  background: #dbeafe;
+  border-radius: 9px;
+}
+
+.dashboardTeamStatusBlock {
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.dashboardTeamStatus {
+  font-size: 10.5px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.dashboardTeamStatusBusy {
+  color: #2563eb;
+}
+
+.dashboardTeamStatusAvailable {
+  color: #15803d;
+}
+
+.dashboardTeamStatusOffline {
+  color: #94a3b8;
+}
+
+.dashboardTeamInspection {
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9.5px;
+}
+
+.dashboardBranchesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.dashboardBranchCard {
+  min-width: 0;
+  padding: 11px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+}
+
+.dashboardBranchHeader {
+  justify-content: flex-start;
+  color: #64748b;
+}
+
+.dashboardBranchHeader svg {
+  flex: 0 0 auto;
+}
+
+.dashboardBranchMetricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 13px;
+}
+
+.dashboardBranchMetric {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboardBranchMetric strong {
+  color: #0f172a;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.dashboardBranchMetric span {
+  font-size: 9.5px;
+  line-height: 1.2;
+}
+
+/* Explicit contrast contract for light dashboard surfaces. */
+.dashboardOverview,
+.dashboardKpiCard,
+.dashboardPanel,
+.dashboardInspectionRow,
+.dashboardAlertRow,
+.dashboardBranchCard {
+  color: var(--owner-text-primary);
+}
+
+.dashboardOverviewTitle,
+.dashboardPanelTitle,
+.dashboardInspectionVehicle,
+.dashboardAlertTitle,
+.dashboardTeamName,
+.dashboardBranchName,
+.dashboardKpiValue,
+.dashboardBranchMetric strong {
+  color: var(--owner-text-primary);
+}
+
+.dashboardOverviewSubtitle,
+.dashboardKpiLabel,
+.dashboardKpiDetail,
+.dashboardPanelMeta,
+.dashboardInspectionMeta,
+.dashboardInspectionTime,
+.dashboardAlertMeta,
+.dashboardTeamMeta,
+.dashboardTeamInspection,
+.dashboardBranchMetric span {
+  color: var(--owner-text-secondary);
+}
+
+.dashboardOverviewEyebrow,
+.dashboardPanelAction,
+.dashboardAlertAction {
+  color: var(--owner-accent);
+}
+
 .sidebarOverlay {
   display: none;
 }
@@ -352,6 +922,15 @@
     width: 100% !important;
     margin-left: 0 !important;
   }
+
+  .dashboardKpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboardContentGrid,
+  .dashboardLowerGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 560px) {
@@ -387,6 +966,48 @@
 
   .ownerHeaderSecondaryAction span {
     display: none;
+  }
+
+  .dashboardOverviewIntro {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboardOverviewActions {
+    justify-content: stretch;
+  }
+
+  .dashboardActionPrimary,
+  .dashboardActionSecondary {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .dashboardKpiGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardInspectionRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboardInspectionMetaGroup {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .dashboardAlertRow {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .dashboardAlertAction {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .dashboardBranchesGrid {
+    grid-template-columns: 1fr;
   }
 
 }

@@ -84,6 +84,74 @@ const OWNER_SIDEBAR_ITEMS: OwnerSidebarItem[] = [
   { id: 'settings', label: 'Configurações', icon: Settings2 },
 ];
 
+// MOCK UI DATA — substituir por consultas reais quando o dashboard receber a integração de dados.
+const OWNER_DASHBOARD_MOCK_DATA = {
+  summary: {
+    inspectionsToday: 12,
+    inProgress: 2,
+    completedToday: 8,
+    withDamage: 2,
+  },
+  alerts: [
+    {
+      id: 'alert-damage-bra2e19',
+      type: 'Avaria registrada',
+      vehicle: 'Honda Civic EXL',
+      plate: 'BRA2E19',
+      branch: 'Pátio Central - SP',
+      time: 'Hoje às 14:48',
+      tone: 'warning',
+    },
+    {
+      id: 'alert-pending-rtl4b12',
+      type: 'Vistoria incompleta',
+      vehicle: 'Toyota Corolla Cross',
+      plate: 'RTL4B12',
+      branch: 'Pátio Congonhas - SP',
+      time: 'Hoje às 12:06',
+      tone: 'info',
+    },
+    {
+      id: 'alert-owner-qwp3c77',
+      type: 'Veículo sem responsável',
+      vehicle: 'Ford Ranger',
+      plate: 'QWP3C77',
+      branch: 'Filial Campinas - SP',
+      time: 'Hoje às 10:40',
+      tone: 'warning',
+    },
+  ],
+  activeTeam: [
+    { id: 'operator-juliana', name: 'Juliana Paes Silva', branch: 'Pátio Congonhas - SP', status: 'Disponível', currentInspection: '—' },
+    { id: 'operator-marcos', name: 'Marcos Vinicius Santos', branch: 'Filial Campinas - SP', status: 'Em vistoria', currentInspection: 'GHX9J88' },
+    { id: 'operator-aline', name: 'Aline Ferreira', branch: 'Pátio Central - SP', status: 'Offline', currentInspection: '—' },
+    { id: 'operator-roberto', name: 'Roberto Antunes', branch: 'Pátio Congonhas - SP', status: 'Disponível', currentInspection: '—' },
+  ],
+  branches: [
+    { id: 'branch-central', name: 'Pátio Central - SP', inspectionsToday: 12, inProgress: 2, pending: 1 },
+    { id: 'branch-congonhas', name: 'Pátio Congonhas - SP', inspectionsToday: 8, inProgress: 1, pending: 0 },
+    { id: 'branch-campinas', name: 'Filial Campinas - SP', inspectionsToday: 6, inProgress: 0, pending: 1 },
+  ],
+} as const;
+
+function getDashboardInspectionStatus(classification: InspectionHistoryItem['classification']) {
+  switch (classification) {
+    case 'APROVADO':
+      return { label: 'Concluída', tone: 'success' as const };
+    case 'COM_AVARIA':
+      return { label: 'Com avaria', tone: 'warning' as const };
+    case 'REPROVADO':
+      return { label: 'Cancelada', tone: 'danger' as const };
+    default:
+      return { label: 'Em andamento', tone: 'info' as const };
+  }
+}
+
+function getDashboardInspectionTime(inspection: InspectionHistoryItem) {
+  const source = inspection.completedAt || inspection.startedAt || '';
+  return source.includes('às ') ? source.split('às ').pop() || '—' : source || '—';
+}
+
 interface OwnerDashboardProps {
   currentUser: AuthenticatedUser;
   onLogout: () => void;
@@ -496,533 +564,316 @@ export function OwnerDashboard({
         }}
       >
         {/* ========================================================= */}
-        {/* ABA 1: VISÃO GERAL (DASHBOARD EXECUTIVO) */}
+        {/* ABA 1: VISÃO GERAL DA OPERAÇÃO */}
         {/* ========================================================= */}
         {activeTab === 'dashboard' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Banner de Boas-vindas ao Proprietário */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                padding: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '16px',
-                background: 'linear-gradient(to right, #ffffff, #f8fafc)',
-              }}
-            >
+          <div className={styles.dashboardOverview}>
+            <section className={styles.dashboardOverviewIntro} aria-labelledby="owner-dashboard-overview-title">
               <div>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: '#2563eb',
-                    letterSpacing: '0.5px',
-                  }}
-                >
-                  Painel de Gestão & Rastreabilidade
-                </span>
-                <h2 style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
-                  Visão Geral da Operação de Vistorias
+                <span className={styles.dashboardOverviewEyebrow}>OPERAÇÃO SURVEY</span>
+                <h2 id="owner-dashboard-overview-title" className={styles.dashboardOverviewTitle}>
+                  Visão Geral da Operação
                 </h2>
-                <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>
-                  Monitore em tempo real as inspeções realizadas pelos operadores nos pátios, homologações e registros de avarias.
+                <p className={styles.dashboardOverviewSubtitle}>
+                  Acompanhe as vistorias, pendências e atividade das unidades em tempo real.
                 </p>
               </div>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div className={styles.dashboardOverviewActions}>
                 <button
                   type="button"
                   id="dash-btn-go-history"
+                  className={styles.dashboardActionSecondary}
                   onClick={() => handleExistingTabChange('history', 'history')}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    color: '#334155',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '8px',
-                    padding: '8px 14px',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
                 >
-                  <ClipboardList size={14} />
-                  Ver Histórico Completo
+                  <ClipboardList size={15} aria-hidden="true" />
+                  Ver Histórico
                 </button>
-
                 <button
                   type="button"
                   id="dash-btn-go-team"
+                  className={styles.dashboardActionPrimary}
                   onClick={() => handleExistingTabChange('team', 'branches')}
-                  style={{
-                    backgroundColor: '#0f172a',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '8px 14px',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
                 >
-                  <Users size={14} />
-                  Gerenciar Operadores
+                  <Users size={15} aria-hidden="true" />
+                  Gerenciar Equipe
                 </button>
               </div>
-            </div>
+            </section>
 
-            {/* Grid de 4 Cards de Métricas Principais (KPIs) */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '16px',
-              }}
-            >
-              {/* KPI 1: Vistorias no Mês */}
-              <div
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '16px 18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>
-                    Vistorias Realizadas (Mês)
-                  </span>
-                  <div
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      backgroundColor: '#eff6ff',
-                      color: '#2563eb',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <ClipboardList size={16} />
+            <section className={styles.dashboardKpiGrid} aria-label="Resumo operacional">
+              {[
+                {
+                  label: 'Vistorias Hoje',
+                  value: OWNER_DASHBOARD_MOCK_DATA.summary.inspectionsToday,
+                  detail: '2 em andamento',
+                  tone: 'blue',
+                  Icon: ClipboardList,
+                },
+                {
+                  label: 'Em Andamento',
+                  value: OWNER_DASHBOARD_MOCK_DATA.summary.inProgress,
+                  detail: 'operadores ativos agora',
+                  tone: 'slate',
+                  Icon: Clock,
+                },
+                {
+                  label: 'Concluídas Hoje',
+                  value: OWNER_DASHBOARD_MOCK_DATA.summary.completedToday,
+                  detail: 'ritmo operacional do dia',
+                  tone: 'green',
+                  Icon: CheckCircle2,
+                },
+                {
+                  label: 'Com Avaria',
+                  value: OWNER_DASHBOARD_MOCK_DATA.summary.withDamage,
+                  detail: 'requerem acompanhamento',
+                  tone: 'amber',
+                  Icon: AlertTriangle,
+                },
+              ].map((kpi) => (
+                <article key={kpi.label} className={styles.dashboardKpiCard}>
+                  <div className={styles.dashboardKpiTop}>
+                    <span className={styles.dashboardKpiLabel}>{kpi.label}</span>
+                    <span
+                      className={`${styles.dashboardKpiIcon} ${
+                        kpi.tone === 'green'
+                          ? styles.dashboardKpiIconGreen
+                          : kpi.tone === 'amber'
+                          ? styles.dashboardKpiIconAmber
+                          : kpi.tone === 'slate'
+                          ? styles.dashboardKpiIconSlate
+                          : styles.dashboardKpiIconBlue
+                      }`}
+                    >
+                      <kpi.Icon size={17} aria-hidden="true" />
+                    </span>
                   </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <span style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a' }}>248</span>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#16a34a' }}>+18% este mês</span>
-                </div>
-                <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>
-                  Média de 8.2 vistorias por dia útil
-                </span>
-              </div>
+                  <strong className={styles.dashboardKpiValue}>{kpi.value}</strong>
+                  <span className={styles.dashboardKpiDetail}>{kpi.detail}</span>
+                </article>
+              ))}
+            </section>
 
-              {/* KPI 2: Vistorias Concluídas Hoje */}
-              <div
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '16px 18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>
-                    Vistorias Concluídas Hoje
-                  </span>
-                  <div
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      backgroundColor: '#f0fdf4',
-                      color: '#16a34a',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <CheckCircle2 size={16} />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <span style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a' }}>18</span>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b' }}>em 3 pátios</span>
-                </div>
-                <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: 600 }}>
-                  ● 1 vistoria em andamento agora
-                </span>
-              </div>
-
-              {/* KPI 3: Índice Sem Avarias (Conformidade) */}
-              <div
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '16px 18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>
-                    Homologados Sem Avarias
-                  </span>
-                  <div
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      backgroundColor: '#fef3c7',
-                      color: '#d97706',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <ShieldCheck size={16} />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <span style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a' }}>88.5%</span>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#d97706' }}>11.5% com danos</span>
-                </div>
-                <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>
-                  Proteção com fotos e termos assinados
-                </span>
-              </div>
-
-              {/* KPI 4: Operadores Conectados */}
-              <div
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '16px 18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>
-                    Operadores Conectados
-                  </span>
-                  <div
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      backgroundColor: '#f1f5f9',
-                      color: '#0f172a',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Users size={16} />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <span style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a' }}>3 / 5</span>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#16a34a' }}>Assentos Ativos</span>
-                </div>
-                <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-                  2 assentos disponíveis no plano
-                </span>
-              </div>
-            </div>
-
-            {/* Seção Dupla: Vistorias Recentes do Dia + Alertas de Avarias */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-                gap: '16px',
-              }}
-            >
-              {/* Painel Esquerdo: Vistorias Recentes Homologadas */}
-              <div
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className={styles.dashboardContentGrid}>
+              <section className={styles.dashboardPanel} aria-labelledby="recent-inspections-title">
+                <div className={styles.dashboardPanelHeader}>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                      Últimas Vistorias Concluídas
+                    <h3 id="recent-inspections-title" className={styles.dashboardPanelTitle}>
+                      Últimas Vistorias
                     </h3>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
-                      Emissão recente de laudos com dados e assinaturas
-                    </p>
+                    <p className={styles.dashboardPanelMeta}>Atividade mais recente da operação</p>
                   </div>
                   <button
                     type="button"
+                    className={styles.dashboardPanelAction}
                     onClick={() => handleExistingTabChange('history', 'history')}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#2563eb',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
                   >
-                    Ver todas <ChevronRight size={13} />
+                    Ver todas
+                    <ChevronRight size={14} aria-hidden="true" />
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {inspectionsList.slice(0, 4).map((insp) => (
-                    <div
-                      key={insp.id}
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #e2e8f0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '10px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div
-                          style={{
-                            backgroundColor: '#0f172a',
-                            color: '#ffffff',
-                            fontWeight: 800,
-                            fontSize: '11px',
-                            padding: '3px 7px',
-                            borderRadius: '4px',
-                            fontFamily: 'monospace',
-                            letterSpacing: '0.5px',
-                          }}
-                        >
-                          {insp.vehicle.plate}
+                <div className={styles.dashboardInspectionList}>
+                  {inspectionsList.slice(0, 4).map((inspection) => {
+                    const status = getDashboardInspectionStatus(inspection.classification);
+
+                    return (
+                      <div key={inspection.id} className={styles.dashboardInspectionRow}>
+                        <div className={styles.dashboardInspectionIdentity}>
+                          <span className={styles.dashboardPlate}>{inspection.vehicle.plate}</span>
+                          <div className={styles.dashboardInspectionMain}>
+                            <strong className={styles.dashboardInspectionVehicle}>
+                              {inspection.vehicle.brand} {inspection.vehicle.model}
+                            </strong>
+                            <span className={styles.dashboardInspectionMeta}>
+                              {inspection.operatorName} · {inspection.branchName}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                            {insp.vehicle.brand} {insp.vehicle.model}
-                          </div>
-                          <div style={{ fontSize: '11px', color: '#64748b' }}>
-                            {insp.operatorName} • {insp.branchName}
-                          </div>
+
+                        <div className={styles.dashboardInspectionMetaGroup}>
+                          <span
+                            className={`${styles.dashboardStatus} ${
+                              status.tone === 'success'
+                                ? styles.dashboardStatusSuccess
+                                : status.tone === 'warning'
+                                ? styles.dashboardStatusWarning
+                                : status.tone === 'danger'
+                                ? styles.dashboardStatusDanger
+                                : styles.dashboardStatusInfo
+                            }`}
+                          >
+                            {status.label}
+                          </span>
+                          <span className={styles.dashboardInspectionTime}>
+                            {getDashboardInspectionTime(inspection)}
+                          </span>
+                          <button
+                            type="button"
+                            className={styles.dashboardInspectionAction}
+                            onClick={() => handleOpenSendPdf(inspection)}
+                            aria-label={'Enviar vistoria ' + inspection.vehicle.plate}
+                            title="Enviar registro"
+                          >
+                            <MessageSquare size={14} aria-hidden="true" />
+                          </button>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              </section>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <section className={styles.dashboardPanel} aria-labelledby="operational-alerts-title">
+                <div className={styles.dashboardPanelHeader}>
+                  <div>
+                    <h3 id="operational-alerts-title" className={styles.dashboardPanelTitle}>
+                      Pendências & Alertas
+                    </h3>
+                    <p className={styles.dashboardPanelMeta}>Itens que exigem acompanhamento</p>
+                  </div>
+                  <span className={styles.dashboardPanelCount}>
+                    {OWNER_DASHBOARD_MOCK_DATA.alerts.length} pendências
+                  </span>
+                </div>
+
+                <div className={styles.dashboardAlerts}>
+                  {OWNER_DASHBOARD_MOCK_DATA.alerts.map((alert) => {
+                    const relatedInspection = inspectionsList.find(
+                      (inspection) => inspection.vehicle.plate === alert.plate
+                    );
+
+                    return (
+                      <div key={alert.id} className={styles.dashboardAlertRow}>
                         <span
-                          style={{
-                            fontSize: '10.5px',
-                            fontWeight: 700,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            backgroundColor:
-                              insp.classification === 'APROVADO'
-                                ? '#f0fdf4'
-                                : insp.classification === 'COM_AVARIA'
-                                ? '#fef3c7'
-                                : '#eff6ff',
-                            color:
-                              insp.classification === 'APROVADO'
-                                ? '#166534'
-                                : insp.classification === 'COM_AVARIA'
-                                ? '#92400e'
-                                : '#1e40af',
-                          }}
+                          className={`${styles.dashboardAlertIcon} ${
+                            alert.tone === 'info'
+                              ? styles.dashboardAlertIconInfo
+                              : styles.dashboardAlertIconWarning
+                          }`}
                         >
-                          {insp.classification === 'APROVADO'
-                            ? 'Aprovado'
-                            : insp.classification === 'COM_AVARIA'
-                            ? 'Com Avaria'
-                            : 'Em Andamento'}
+                          <AlertTriangle size={16} aria-hidden="true" />
                         </span>
-
+                        <div className={styles.dashboardAlertBody}>
+                          <strong className={styles.dashboardAlertTitle}>{alert.type}</strong>
+                          <span className={styles.dashboardAlertMeta}>
+                            {alert.vehicle} · {alert.plate}
+                          </span>
+                          <span className={styles.dashboardAlertMeta}>
+                            {alert.branch} · {alert.time}
+                          </span>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => handleOpenSendPdf(insp)}
-                          style={{
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '6px',
-                            padding: '4px 7px',
-                            cursor: 'pointer',
-                            color: '#16a34a',
-                            display: 'flex',
-                            alignItems: 'center',
-                          }}
-                          title="Enviar PDF no WhatsApp"
+                          className={styles.dashboardAlertAction}
+                          onClick={() => relatedInspection && setViewDetailsInspection(relatedInspection)}
+                          disabled={!relatedInspection}
                         >
-                          <MessageSquare size={13} />
+                          Ver detalhes
                         </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
+
+            <div className={styles.dashboardLowerGrid}>
+              <section className={styles.dashboardPanel} aria-labelledby="active-team-title">
+                <div className={styles.dashboardPanelHeader}>
+                  <div>
+                    <h3 id="active-team-title" className={styles.dashboardPanelTitle}>
+                      Equipe Ativa
+                    </h3>
+                    <p className={styles.dashboardPanelMeta}>Acompanhe os operadores em cada unidade</p>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.dashboardPanelAction}
+                    onClick={() => handleExistingTabChange('team', 'branches')}
+                  >
+                    Gerenciar equipe
+                    <ChevronRight size={14} aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className={styles.dashboardTeamList}>
+                  {OWNER_DASHBOARD_MOCK_DATA.activeTeam.map((operator) => (
+                    <div key={operator.id} className={styles.dashboardTeamRow}>
+                      <span className={styles.dashboardAvatar} aria-hidden="true">
+                        {operator.name
+                          .split(' ')
+                          .map((part) => part[0])
+                          .slice(0, 2)
+                          .join('')}
+                      </span>
+                      <div className={styles.dashboardTeamMain}>
+                        <strong className={styles.dashboardTeamName}>{operator.name}</strong>
+                        <span className={styles.dashboardTeamMeta}>{operator.branch}</span>
+                      </div>
+                      <div className={styles.dashboardTeamStatusBlock}>
+                        <span
+                          className={`${styles.dashboardTeamStatus} ${
+                            operator.status === 'Em vistoria'
+                              ? styles.dashboardTeamStatusBusy
+                              : operator.status === 'Disponível'
+                              ? styles.dashboardTeamStatusAvailable
+                              : styles.dashboardTeamStatusOffline
+                          }`}
+                        >
+                          {operator.status}
+                        </span>
+                        {operator.currentInspection !== '—' && (
+                          <span className={styles.dashboardTeamInspection}>
+                            {operator.currentInspection}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              {/* Painel Direito: Avarias Registradas & Auditoria Rápida */}
-              <div
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  padding: '18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <section className={styles.dashboardPanel} aria-labelledby="branches-summary-title">
+                <div className={styles.dashboardPanelHeader}>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                      Alertas de Avarias & Contestações
+                    <h3 id="branches-summary-title" className={styles.dashboardPanelTitle}>
+                      Unidades
                     </h3>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
-                      Veículos que entraram com danos fotografados
-                    </p>
+                    <p className={styles.dashboardPanelMeta}>Visão rápida por local de operação</p>
                   </div>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#b45309',
-                      backgroundColor: '#fef3c7',
-                      padding: '2px 8px',
-                      borderRadius: '6px',
-                    }}
-                  >
-                    2 Avarias Recentes
-                  </span>
+                  <Building2 size={18} color="#64748b" aria-hidden="true" />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div
-                    style={{
-                      backgroundColor: '#fffbeb',
-                      border: '1px solid #fde68a',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <AlertTriangle size={15} color="#d97706" />
-                        <strong style={{ fontSize: '12.5px', color: '#92400e' }}>
-                          Honda Civic EXL • BRA2E19
-                        </strong>
+                <div className={styles.dashboardBranchesGrid}>
+                  {OWNER_DASHBOARD_MOCK_DATA.branches.map((branch) => (
+                    <article key={branch.id} className={styles.dashboardBranchCard}>
+                      <div className={styles.dashboardBranchHeader}>
+                        <Building2 size={16} aria-hidden="true" />
+                        <strong className={styles.dashboardBranchName}>{branch.name}</strong>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#b45309' }}>Hoje às 14:48</span>
-                    </div>
-                    <p style={{ margin: 0, fontSize: '11.5px', color: '#78350f', lineHeight: 1.4 }}>
-                      Risco superficial de 5cm no para-choque traseiro direito registrado por Marcos Silveira com foto comprobatória.
-                    </p>
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const item = inspectionsList.find((i) => i.vehicle.plate === 'BRA2E19');
-                          if (item) setViewDetailsInspection(item);
-                        }}
-                        style={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #fed7aa',
-                          color: '#92400e',
-                          borderRadius: '4px',
-                          padding: '3px 8px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Ver Foto & Detalhes
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      backgroundColor: '#fffbeb',
-                      border: '1px solid #fde68a',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <AlertTriangle size={15} color="#d97706" />
-                        <strong style={{ fontSize: '12.5px', color: '#92400e' }}>
-                          Jeep Compass • GHX9J88
-                        </strong>
+                      <div className={styles.dashboardBranchMetricGrid}>
+                        <div className={styles.dashboardBranchMetric}>
+                          <strong>{branch.inspectionsToday}</strong>
+                          <span>vistorias hoje</span>
+                        </div>
+                        <div className={styles.dashboardBranchMetric}>
+                          <strong>{branch.inProgress}</strong>
+                          <span>em andamento</span>
+                        </div>
+                        <div className={styles.dashboardBranchMetric}>
+                          <strong>{branch.pending}</strong>
+                          <span>pendências</span>
+                        </div>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#b45309' }}>Hoje às 09:32</span>
-                    </div>
-                    <p style={{ margin: 0, fontSize: '11.5px', color: '#78350f', lineHeight: 1.4 }}>
-                      2 avarias registradas na recepção da oficina: amassado na porta esquerda e ralado no para-choque dianteiro.
-                    </p>
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const item = inspectionsList.find((i) => i.vehicle.plate === 'GHX9J88');
-                          if (item) setViewDetailsInspection(item);
-                        }}
-                        style={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #fed7aa',
-                          color: '#92400e',
-                          borderRadius: '4px',
-                          padding: '3px 8px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Ver Foto & Detalhes
-                      </button>
-                    </div>
-                  </div>
+                    </article>
+                  ))}
                 </div>
-              </div>
+              </section>
             </div>
           </div>
         )}
-
         {/* ========================================================= */}
         {/* ABA 2: HISTÓRICO COMPLETO DE VISTORIAS */}
         {/* ========================================================= */}
