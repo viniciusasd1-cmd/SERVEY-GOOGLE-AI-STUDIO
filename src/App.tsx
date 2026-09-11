@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import LandingPage from '../app/page';
 import { TemplateSelector } from '../components/inspection/template-selector';
 import { ChecklistScreen } from '../components/inspection/checklist-screen';
@@ -9,14 +9,30 @@ import { INITIAL_INSPECTION_MOCK, MOCK_TEMPLATES } from '../lib/mock-inspection-
 import { Inspection, InspectionTemplate } from '../lib/inspection-types';
 import { ShieldAlert } from 'lucide-react';
 import { useTheme } from '../lib/theme-context';
+import {
+  AuthAccessError,
+  createAuthenticatedUser,
+  getAuthenticatedSession,
+  signOut,
+} from './lib/auth';
+import { isSupabaseReady } from './lib/supabase';
 
 type CurrentRoute = 'landing' | 'login' | 'register' | 'forgot-password' | 'dashboard' | 'team' | 'template' | 'checklist';
+
+function isManagementRole(role: AuthenticatedUser['membershipRole']): boolean {
+  return role === 'OWNER' || role === 'ADMIN';
+}
+
+function isOperationalRole(role: AuthenticatedUser['membershipRole']): boolean {
+  return role === 'SUPERVISOR' || role === 'INSPECTOR';
+}
 
 export default function App() {
   const { isDark } = useTheme();
   const [currentRoute, setCurrentRoute] = useState<CurrentRoute>('landing');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('tpl-completa');
   const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
+  const [authActionError, setAuthActionError] = useState<string | null>(null);
 
   // Controle de ciclo de teste único (Ambiente Sandbox)
   const [testCycleCompleted, setTestCycleCompleted] = useState<boolean>(false);
@@ -24,6 +40,52 @@ export default function App() {
 
   // Instância de vistoria em andamento
   const [inspection, setInspection] = useState<Inspection>(INITIAL_INSPECTION_MOCK);
+
+  useEffect(() => {
+    let active = true;
+
+    const restoreSession = async () => {
+      if (!isSupabaseReady()) return;
+
+      try {
+        const authenticatedSession = await getAuthenticatedSession();
+        if (!active) return;
+
+        const restoredUser = createAuthenticatedUser(
+          authenticatedSession.user,
+          authenticatedSession.access,
+          'email'
+        );
+        setCurrentUser(restoredUser);
+        setInspection((prev) => ({
+          ...prev,
+          operatorName: `${restoredUser.name} (${restoredUser.company})`,
+        }));
+        setCurrentRoute(
+          isOperationalRole(restoredUser.membershipRole) ? 'template' : 'dashboard'
+        );
+      } catch (error: unknown) {
+        if (
+          active &&
+          error instanceof AuthAccessError &&
+          error.code !== 'SESSION_REQUIRED'
+        ) {
+          await signOut().catch(() => undefined);
+        }
+      }
+    };
+
+    void restoreSession();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (currentRoute === 'dashboard' && (!currentUser || !isManagementRole(currentUser.membershipRole))) {
+      setCurrentRoute('login');
+    }
+  }, [currentRoute, currentUser]);
 
   // Obtém o template selecionado atualmente
   const activeTemplate = 
@@ -33,7 +95,7 @@ export default function App() {
   const handleStartInspectionFromLanding = () => {
     if (currentUser) {
       // Se for proprietário, vai para o dashboard ou vistoria; se for operador vai direto para a vistoria
-      if (currentUser.roleType === 'OWNER') {
+      if (isManagementRole(currentUser.membershipRole)) {
         setCurrentRoute('dashboard');
       } else {
         setCurrentRoute('template');
@@ -97,7 +159,7 @@ export default function App() {
     // SEPARAÇÃO DE FLUXOS POR PAPEL (Diretriz do Usuário):
     // - Operador de Pátio: vai DIRETO para a vistoria de campo (seleção de modelo / checklist)
     // - Proprietário / Gestor: vai para o Painel Executivo (Dashboard, Histórico, Equipes, Controle de Logins/Acessos)
-    if (user.roleType === 'OPERATOR') {
+    if (isOperationalRole(user.membershipRole)) {
       setCurrentRoute('template');
     } else {
       setCurrentRoute('dashboard');
@@ -105,11 +167,19 @@ export default function App() {
   };
 
   // Logout
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setTestCycleCompleted(false);
-    setShowTestLimitModal(false);
-    setCurrentRoute('landing');
+  const handleLogout = async () => {
+    setAuthActionError(null);
+
+    try {
+      await signOut();
+      setCurrentUser(null);
+      setTestCycleCompleted(false);
+      setShowTestLimitModal(false);
+      setCurrentRoute('landing');
+    } catch (error: unknown) {
+      console.error('Erro ao encerrar sessão:', error);
+      setAuthActionError('Não foi possível encerrar a sessão. Tente novamente.');
+    }
   };
 
   // Iniciar vistoria a partir da seleção de template
@@ -159,6 +229,27 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f1f5f9' }}>
+      {authActionError && (
+        <div
+          role="alert"
+          style={{
+            position: 'fixed',
+            top: 12,
+            right: 12,
+            zIndex: 10000,
+            maxWidth: 360,
+            padding: '12px 16px',
+            borderRadius: 10,
+            backgroundColor: '#fee2e2',
+            color: '#991b1b',
+            border: '1px solid #fecaca',
+            fontSize: 13,
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.16)',
+          }}
+        >
+          {authActionError}
+        </div>
+      )}
       {/* Conteúdo Renderizado (Direto ou dentro da Moldura Mobile) */}
       <div
         style={{
@@ -206,18 +297,9 @@ export default function App() {
               />
             )}
 
-            {currentRoute === 'dashboard' && (
+            {currentRoute === 'dashboard' && currentUser && isManagementRole(currentUser.membershipRole) && (
               <OwnerDashboard
-                currentUser={
-                  currentUser || {
-                    name: 'Carlos Mendes',
-                    email: 'carlos.mendes@locafrotas.com.br',
-                    company: 'Locafrotas Brasil Gestão de Frotas',
-                    role: 'Proprietário / Diretor',
-                    roleType: 'OWNER',
-                    provider: 'email',
-                  }
-                }
+                currentUser={currentUser}
                 onLogout={handleLogout}
                 onStartNewInspection={() => {
                   setInspection((prev) => ({
@@ -240,7 +322,7 @@ export default function App() {
               <TeamManagement
                 currentUser={currentUser}
                 onBack={() => {
-                  if (currentUser?.roleType === 'OWNER') {
+                  if (currentUser && isManagementRole(currentUser.membershipRole)) {
                     setCurrentRoute('dashboard');
                   } else {
                     setCurrentRoute('landing');
@@ -263,7 +345,7 @@ export default function App() {
                 currentTemplateId={selectedTemplateId}
                 onStartInspection={handleStartInspectionFromTemplate}
                 onBackToLanding={() => {
-                  if (currentUser?.roleType === 'OWNER') {
+                  if (currentUser && isManagementRole(currentUser.membershipRole)) {
                     setCurrentRoute('dashboard');
                   } else {
                     setCurrentRoute('landing');
@@ -281,7 +363,7 @@ export default function App() {
                 steps={activeTemplate.steps}
                 onChangeTemplate={() => setCurrentRoute('template')}
                 onBackToLanding={() => {
-                  if (currentUser?.roleType === 'OWNER') {
+                  if (currentUser && isManagementRole(currentUser.membershipRole)) {
                     setCurrentRoute('dashboard');
                   } else {
                     setCurrentRoute('landing');

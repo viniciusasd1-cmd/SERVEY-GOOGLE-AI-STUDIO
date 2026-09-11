@@ -17,27 +17,23 @@ import {
   ShieldCheck,
   Sparkles
 } from 'lucide-react';
-import { signInWithPassword } from '../../src/lib/auth';
+import {
+  AuthAccessError,
+  createAuthenticatedUser,
+  resetPasswordForEmail,
+  resolveAuthenticatedAccess,
+  roleTypeFromMembershipRole,
+  signInWithPassword,
+  signOut,
+  signUpWithPassword,
+} from '../../src/lib/auth';
+import type { AuthenticatedUser } from '../../src/lib/auth';
+export type { AuthenticatedUser } from '../../src/lib/auth';
 import { isSupabaseReady } from '../../src/lib/supabase';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { useTheme } from '../../lib/theme-context';
-import { resolveUserAccessByEmail } from '../../lib/team-store';
 
 export type AuthScreenType = 'login' | 'register' | 'forgot-password';
-
-export interface AuthenticatedUser {
-  name: string;
-  email: string;
-  company: string;
-  role: string;
-  roleType?: 'OWNER' | 'OPERATOR';
-  avatarUrl?: string;
-  provider: 'google' | 'email' | 'test_sandbox';
-  isTestMode?: boolean;
-  testCyclesAllowed?: number;
-  testCyclesUsed?: number;
-  testCycleCompleted?: boolean;
-}
 
 interface AuthScreensProps {
   initialScreen?: AuthScreenType;
@@ -78,8 +74,8 @@ export function AuthScreens({
 
   // Estados de feedback & loading
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isTestModeActive, setIsTestModeActive] = useState(false);
 
   // Modal de Simulação Google Account Chooser
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -87,10 +83,31 @@ export function AuthScreens({
   // Limpa mensagens de erro ao mudar de tela
   const switchScreen = (screen: AuthScreenType) => {
     setErrorMessage(null);
+    setSuccessMessage(null);
     setCurrentScreen(screen);
   };
 
-  // Login via E-mail / Senha (Detecção automática de nível de usuário)
+  const isDevelopment = import.meta.env.DEV;
+
+  function friendlyAuthError(error: unknown): string {
+    if (error instanceof AuthAccessError) {
+      if (error.code === 'AUTHENTICATION_UNAVAILABLE') {
+        return 'A autenticação está temporariamente indisponível. Tente novamente mais tarde.';
+      }
+      return 'Não foi possível confirmar seu acesso. Verifique suas credenciais ou fale com o administrador da organização.';
+    }
+
+    const message = error instanceof Error ? error.message : '';
+    if (message.includes('Invalid login credentials')) {
+      return 'Credenciais inválidas: e-mail ou senha incorretos.';
+    }
+    if (message.includes('Email not confirmed')) {
+      return 'E-mail cadastrado no Supabase ainda não foi confirmado.';
+    }
+    return 'Não foi possível concluir a operação. Tente novamente.';
+  }
+
+  // Login via E-mail / Senha com membership real
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -102,80 +119,33 @@ export function AuthScreens({
 
     setIsSubmitting(true);
 
-    // Resolução automática de perfil:
-    // 1. Quem comprou o sistema é Proprietário / Gestor (OWNER)
-    // 2. Quando o proprietário cadastra a equipe, ele define o nível (Vistoriador de Campo = OPERATOR, etc.)
-    const resolvedAccess = resolveUserAccessByEmail(loginEmail);
-
-    // Se o Supabase estiver configurado com publishable key
-    if (isSupabaseReady()) {
-      try {
-        const authData = await signInWithPassword(loginEmail.trim(), loginPassword);
-        if (authData?.user) {
-          const userMeta = authData.user.user_metadata || {};
-          const finalRoleType = (userMeta.roleType as 'OWNER' | 'OPERATOR') || resolvedAccess.roleType;
-          onSuccessAuth({
-            name: userMeta.name || authData.user.email?.split('@')[0] || resolvedAccess.name || 'Usuário',
-            email: authData.user.email || loginEmail.trim(),
-            company: userMeta.company || resolvedAccess.company || 'Locafrotas Gestão de Veículos',
-            role: userMeta.role || resolvedAccess.roleLabel,
-            roleType: finalRoleType,
-            provider: 'email',
-          });
-          return;
-        }
-      } catch (err: any) {
-        console.error('Erro na autenticação Supabase:', err);
-        let friendlyMsg = err?.message || 'Falha ao autenticar no Supabase.';
-        if (friendlyMsg.includes('Invalid login credentials')) {
-          friendlyMsg = 'Credenciais inválidas: e-mail ou senha incorretos.';
-        } else if (friendlyMsg.includes('Email not confirmed')) {
-          friendlyMsg = 'E-mail cadastrado no Supabase ainda não foi confirmado.';
-        }
-        setErrorMessage(friendlyMsg);
-        setIsSubmitting(false);
-        return;
+    try {
+      if (!isSupabaseReady()) {
+        throw new AuthAccessError(
+          'AUTHENTICATION_UNAVAILABLE',
+          'Supabase não está configurado para autenticação.'
+        );
       }
-    }
 
-    // Fallback de demonstração ou modo de teste
-    setTimeout(() => {
+      const authData = await signInWithPassword(loginEmail.trim(), loginPassword);
+      if (!authData.user) {
+        throw new AuthAccessError('SESSION_UNAVAILABLE', 'Sessão autenticada não encontrada.');
+      }
+
+      const access = await resolveAuthenticatedAccess(authData.user.id);
+      onSuccessAuth(createAuthenticatedUser(authData.user, access, 'email'));
+    } catch (error: unknown) {
+      if (error instanceof AuthAccessError && error.code !== 'AUTHENTICATION_UNAVAILABLE') {
+        await signOut().catch(() => undefined);
+      }
+      setErrorMessage(friendlyAuthError(error));
+    } finally {
       setIsSubmitting(false);
-
-      const isTesting =
-        isTestModeActive ||
-        loginEmail.toLowerCase().includes('teste') ||
-        loginEmail.toLowerCase().includes('sandbox');
-
-      if (isTesting) {
-        onSuccessAuth({
-          name: 'Vistoriador em Teste',
-          email: loginEmail.trim() || 'teste.sandbox@survey.com.br',
-          company: 'Ambiente Sandbox (Degustação)',
-          role: 'Operador em Teste (1 Ciclo)',
-          roleType: 'OPERATOR',
-          provider: 'test_sandbox',
-          isTestMode: true,
-          testCyclesAllowed: 1,
-          testCyclesUsed: 0,
-          testCycleCompleted: false,
-        });
-      } else {
-        onSuccessAuth({
-          name: resolvedAccess.name || loginEmail.split('@')[0],
-          email: loginEmail.trim(),
-          company: resolvedAccess.company || 'Locafrotas Brasil Gestão de Frotas',
-          role: resolvedAccess.roleLabel,
-          roleType: resolvedAccess.roleType,
-          provider: 'email',
-          isTestMode: false,
-        });
-      }
-    }, 450);
+    }
   };
 
-  // Cadastro de Nova Conta (por padrão cria conta de Proprietário/Administrador)
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  // Cadastro cria apenas a conta Auth; membership é provisionada fora do frontend.
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -200,21 +170,35 @@ export function AuthScreens({
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onSuccessAuth({
-        name: regName,
-        email: regEmail,
-        company: regCompany.trim() || 'Oficina & Gestão de Veículos',
-        role: 'Proprietário / Gestor da Empresa',
-        roleType: 'OWNER',
-        provider: 'email',
+    try {
+      if (!isSupabaseReady()) {
+        throw new AuthAccessError(
+          'AUTHENTICATION_UNAVAILABLE',
+          'Supabase não está configurado para cadastro.'
+        );
+      }
+
+      const signUpData = await signUpWithPassword(regEmail.trim(), regPassword, {
+        name: regName.trim(),
+        company: regCompany.trim(),
+        segment: regSegment,
       });
-    }, 550);
+
+      if (signUpData.session) {
+        await signOut();
+      }
+
+      setSuccessMessage('Conta criada. O acesso à organização ainda precisa ser provisionado.');
+      setCurrentScreen('login');
+    } catch (error: unknown) {
+      setErrorMessage(friendlyAuthError(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Esqueci a Senha
-  const handleForgotSubmit = (e: React.FormEvent) => {
+  const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -224,27 +208,47 @@ export function AuthScreens({
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      if (!isSupabaseReady()) {
+        throw new AuthAccessError(
+          'AUTHENTICATION_UNAVAILABLE',
+          'Supabase não está configurado para recuperação de senha.'
+        );
+      }
+
+      await resetPasswordForEmail(forgotEmail.trim());
       setForgotSubmitted(true);
-    }, 400);
+    } catch (error: unknown) {
+      setErrorMessage(friendlyAuthError(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Disparo do Google Sign-In / Sign-Up
   const handleSelectGoogleAccount = (email: string, name: string) => {
+    if (!isDevelopment) {
+      setShowGoogleModal(false);
+      setErrorMessage('Login com Google ainda não está disponível neste ambiente.');
+      return;
+    }
+
     setShowGoogleModal(false);
     setIsSubmitting(true);
 
-    const resolvedAccess = resolveUserAccessByEmail(email);
+    const membershipRole = email.includes('juliana') ? 'INSPECTOR' : 'OWNER';
 
     setTimeout(() => {
       setIsSubmitting(false);
       onSuccessAuth({
         name,
         email,
-        company: resolvedAccess.company || 'Locafrotas Brasil Gestão de Frotas',
-        role: resolvedAccess.roleLabel,
-        roleType: resolvedAccess.roleType,
+        company: 'Ambiente de Desenvolvimento',
+        role: membershipRole === 'OWNER' ? 'Proprietário de Demonstração' : 'Inspetor de Demonstração',
+        roleType: roleTypeFromMembershipRole(membershipRole),
+        membershipRole,
+        organizationId: 'dev-demo-organization',
+        branchId: null,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
         provider: 'google',
       });
@@ -253,6 +257,7 @@ export function AuthScreens({
 
   // Acesso Direto Demonstrativo: Proprietário (vai para o Dashboard de Gestão)
   const handleOwnerDemoLogin = () => {
+    if (!isDevelopment) return;
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
@@ -262,6 +267,9 @@ export function AuthScreens({
         company: 'Locafrotas Brasil Gestão de Frotas',
         role: 'Proprietário / Diretor de Operações',
         roleType: 'OWNER',
+        membershipRole: 'OWNER',
+        organizationId: 'dev-demo-organization',
+        branchId: null,
         provider: 'email',
         isTestMode: false,
       });
@@ -270,6 +278,7 @@ export function AuthScreens({
 
   // Acesso Direto Demonstrativo: Operador de Pátio (vai DIRETO para a vistoria)
   const handleOperatorDemoLogin = () => {
+    if (!isDevelopment) return;
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
@@ -279,21 +288,18 @@ export function AuthScreens({
         company: 'Locafrotas - Pátio Congonhas',
         role: 'Operadora de Vistoria de Campo',
         roleType: 'OPERATOR',
+        membershipRole: 'INSPECTOR',
+        organizationId: 'dev-demo-organization',
+        branchId: null,
         provider: 'email',
         isTestMode: false,
       });
     }, 350);
   };
 
-  // Atalho para preenchimento de teste rápido (Ambiente isolado de 1 ciclo único)
-  const handleQuickDemoFill = () => {
-    setLoginEmail('teste.sandbox@survey.com.br');
-    setLoginPassword('teste1ciclo');
-    setIsTestModeActive(true);
-  };
-
   // Entrada imediata no Estado Único de Testes (1 ciclo de vistoria)
   const handleEnterTestMode = () => {
+    if (!isDevelopment) return;
     setIsSubmitting(true);
     setErrorMessage(null);
     setTimeout(() => {
@@ -304,6 +310,9 @@ export function AuthScreens({
         company: 'Ambiente Sandbox (Degustação)',
         role: 'Operador em Teste (1 Ciclo)',
         roleType: 'OPERATOR',
+        membershipRole: 'INSPECTOR',
+        organizationId: 'dev-sandbox-organization',
+        branchId: null,
         provider: 'test_sandbox',
         isTestMode: true,
         testCyclesAllowed: 1,
@@ -357,12 +366,24 @@ export function AuthScreens({
                 <span>{errorMessage}</span>
               </div>
             )}
+            {successMessage && (
+              <div className={`${styles.alertBox} ${styles.alertSuccess}`} id="login-success-alert">
+                <CheckCircle2 size={18} />
+                <span>{successMessage}</span>
+              </div>
+            )}
 
             {/* Botão de Conectar com Google */}
             <button
               type="button"
               className={styles.googleBtn}
-              onClick={() => setShowGoogleModal(true)}
+              onClick={() => {
+                if (isDevelopment) {
+                  setShowGoogleModal(true);
+                } else {
+                  setErrorMessage('Login com Google ainda não está disponível neste ambiente.');
+                }
+              }}
               id="btn-google-login"
             >
               <div className={styles.googleIconWrapper}>
@@ -483,7 +504,7 @@ export function AuthScreens({
             </form>
 
             {/* Atalhos de Demonstração e Perfis */}
-            <div className={styles.demoShortcutCard} id="auth-demo-shortcut-box">
+            {isDevelopment && <div className={styles.demoShortcutCard} id="auth-demo-shortcut-box">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '6px' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <Sparkles size={14} color="#2563eb" />
@@ -594,7 +615,7 @@ export function AuthScreens({
                 <Sparkles size={12} color="#d97706" />
                 Degustação Isolada (1 Ciclo Sandbox)
               </button>
-            </div>
+            </div>}
 
             {/* Rodapé: Criar Cadastro */}
             <div className={styles.authCardFooter}>
@@ -637,7 +658,13 @@ export function AuthScreens({
             <button
               type="button"
               className={styles.googleBtn}
-              onClick={() => setShowGoogleModal(true)}
+              onClick={() => {
+                if (isDevelopment) {
+                  setShowGoogleModal(true);
+                } else {
+                  setErrorMessage('Cadastro com Google ainda não está disponível neste ambiente.');
+                }
+              }}
               id="btn-google-register"
             >
               <div className={styles.googleIconWrapper}>
