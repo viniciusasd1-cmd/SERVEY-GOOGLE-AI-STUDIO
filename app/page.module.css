@@ -3295,12 +3295,30 @@
 }
 
 /* Header público permanece legível durante o scroll */
+.landingWrapper {
+  --landing-header-height: 72px;
+  padding-top: var(--landing-header-height);
+}
+
 .navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
   background: rgba(255, 255, 255, 0.96);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-bottom-color: rgba(226, 232, 240, 0.92);
+}
+
+[id] {
+  scroll-margin-top: var(--landing-header-height);
+}
+
+@media (max-width: 640px) {
+  .landingWrapper {
+    --landing-header-height: 62px;
+  }
 }
