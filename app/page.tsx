@@ -181,17 +181,15 @@ export default function LandingPage({
           <div className={styles.heroContent}>
             <div className={styles.heroTag}>
               <ShieldCheck size={14} />
-              Proteção Jurídica & Rastreabilidade Operacional
+              Vistoria Digital • Evidências • Rastreabilidade
             </div>
 
             <h1 className={styles.heroTitle}>
-              Blindagem total contra avarias não registradas e <span className={styles.heroHighlight}>prejuízos indevidos</span>.
+              Registre cada detalhe do veículo <span className={styles.heroHighlight}>antes que vire um problema</span>.
             </h1>
 
             <p className={styles.heroSubtitle}>
-              Substitua pranchetas sujas e fotos perdidas no WhatsApp por um checklist digital 
-              padronizado. Faça a vistoria completa de entrada e saída em menos de 2 minutos pelo 
-              celular e gere laudos com valor probatório imediato.
+              Padronize vistorias de entrada e saída com checklist guiado, fotos vinculadas a cada item, identificação do responsável e histórico organizado em um único lugar.
             </p>
 
             <div className={styles.heroButtonGroup}>
@@ -201,7 +199,7 @@ export default function LandingPage({
                 className={styles.primaryBtn}
                 onClick={handleStart}
               >
-                Começar vistoria grátis agora
+                Começar vistoria grátis
                 <ArrowRight size={18} />
               </button>
 
@@ -221,10 +219,10 @@ export default function LandingPage({
                 <Check size={16} className={styles.trustIcon} /> Sem cartão de crédito
               </span>
               <span className={styles.trustItem}>
-                <Check size={16} className={styles.trustIcon} /> Pronto em menos de 2 minutos
+                <Check size={16} className={styles.trustIcon} /> Funciona no navegador
               </span>
               <span className={styles.trustItem}>
-                <Check size={16} className={styles.trustIcon} /> 100% no celular sem instalar app
+                <Check size={16} className={styles.trustIcon} /> Feito para uso no celular
               </span>
             </div>
           </div>
@@ -286,7 +284,7 @@ export default function LandingPage({
 
               <div className={styles.reportCardFooter}>
                 <span className={styles.reportSignatureStamp}>
-                  <ShieldCheck size={14} /> Laudo Digital Autenticado
+                  <ShieldCheck size={14} /> Vistoria registrada com data e operador
                 </span>
                 <span>ID: #insp_78942</span>
               </div>
