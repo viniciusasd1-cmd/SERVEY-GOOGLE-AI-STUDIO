@@ -1026,6 +1026,11 @@
   letter-spacing: -0.01em;
 }
 
+/* O tema global aplica [data-theme="dark"] h3 com !important; escopo esta exceção somente aos painéis claros do Owner. */
+.ownerDashboardRoot .dashboardCompactPanelTitle {
+  color: #0f172a !important;
+}
+
 .dashboardCompactPanelMeta {
   margin: 4px 0 0;
   color: var(--owner-text-secondary);
