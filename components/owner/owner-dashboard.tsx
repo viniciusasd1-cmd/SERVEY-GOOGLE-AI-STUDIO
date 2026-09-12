@@ -92,6 +92,28 @@ const OWNER_DASHBOARD_MOCK_DATA = {
     completedToday: 8,
     withDamage: 2,
   },
+  inProgressInspections: [
+    {
+      id: 'progress-bra2e19',
+      plate: 'BRA2E19',
+      vehicle: 'Honda Civic EXL',
+      operator: 'Marcos Silveira',
+      branch: 'Pátio Central - SP',
+      startedAgo: 'há 18 min',
+      status: 'Em andamento',
+      tone: 'info',
+    },
+    {
+      id: 'progress-ghx9j88',
+      plate: 'GHX9J88',
+      vehicle: 'Jeep Compass',
+      operator: 'Marcos Vinicius Santos',
+      branch: 'Filial Campinas - SP',
+      startedAgo: 'há 46 min',
+      status: 'Em andamento',
+      tone: 'info',
+    },
+  ],
   alerts: [
     {
       id: 'alert-damage-bra2e19',
@@ -564,160 +586,193 @@ export function OwnerDashboard({
         }}
       >
         {/* ========================================================= */}
-        {/* ABA 1: VISÃO GERAL DA OPERAÇÃO */}
+        {/* ABA 1: VISÃO GERAL DA OPERAÇÃO — LAYOUT COMPACTO */}
         {/* ========================================================= */}
         {activeTab === 'dashboard' && (
-          <div className={styles.dashboardOverview}>
-            <section className={styles.dashboardOverviewIntro} aria-labelledby="owner-dashboard-overview-title">
+          <div className={styles.dashboardCompact}>
+            <section className={styles.dashboardCompactHeader} aria-labelledby="owner-dashboard-overview-title">
               <div>
-                <span className={styles.dashboardOverviewEyebrow}>OPERAÇÃO SURVEY</span>
-                <h2 id="owner-dashboard-overview-title" className={styles.dashboardOverviewTitle}>
+                <span className={styles.dashboardCompactEyebrow}>CENTRO DE OPERAÇÃO</span>
+                <h2 id="owner-dashboard-overview-title" className={styles.dashboardCompactTitle}>
                   Visão Geral da Operação
                 </h2>
-                <p className={styles.dashboardOverviewSubtitle}>
-                  Acompanhe as vistorias, pendências e atividade das unidades em tempo real.
+                <p className={styles.dashboardCompactSubtitle}>
+                  Acompanhe o que está acontecendo agora e o que precisa de atenção.
                 </p>
               </div>
 
-              <div className={styles.dashboardOverviewActions}>
+              <div className={styles.dashboardCompactActions}>
                 <button
                   type="button"
-                  id="dash-btn-go-history"
                   className={styles.dashboardActionSecondary}
                   onClick={() => handleExistingTabChange('history', 'history')}
                 >
-                  <ClipboardList size={15} aria-hidden="true" />
+                  <ClipboardList size={14} aria-hidden="true" />
                   Ver Histórico
                 </button>
                 <button
                   type="button"
-                  id="dash-btn-go-team"
                   className={styles.dashboardActionPrimary}
                   onClick={() => handleExistingTabChange('team', 'branches')}
                 >
-                  <Users size={15} aria-hidden="true" />
+                  <Users size={14} aria-hidden="true" />
                   Gerenciar Equipe
                 </button>
               </div>
             </section>
 
-            <section className={styles.dashboardKpiGrid} aria-label="Resumo operacional">
+            <section className={styles.dashboardCompactKpis} aria-label="Resumo operacional">
               {[
                 {
                   label: 'Vistorias Hoje',
                   value: OWNER_DASHBOARD_MOCK_DATA.summary.inspectionsToday,
-                  detail: '2 em andamento',
-                  tone: 'blue',
                   Icon: ClipboardList,
+                  tone: 'blue',
                 },
                 {
-                  label: 'Em Andamento',
+                  label: 'Em andamento',
                   value: OWNER_DASHBOARD_MOCK_DATA.summary.inProgress,
-                  detail: 'operadores ativos agora',
-                  tone: 'slate',
                   Icon: Clock,
+                  tone: 'slate',
                 },
                 {
-                  label: 'Concluídas Hoje',
+                  label: 'Concluídas',
                   value: OWNER_DASHBOARD_MOCK_DATA.summary.completedToday,
-                  detail: 'ritmo operacional do dia',
-                  tone: 'green',
                   Icon: CheckCircle2,
+                  tone: 'green',
                 },
                 {
-                  label: 'Com Avaria',
+                  label: 'Pendências/Avarias',
                   value: OWNER_DASHBOARD_MOCK_DATA.summary.withDamage,
-                  detail: 'requerem acompanhamento',
-                  tone: 'amber',
                   Icon: AlertTriangle,
+                  tone: 'amber',
                 },
               ].map((kpi) => (
-                <article key={kpi.label} className={styles.dashboardKpiCard}>
-                  <div className={styles.dashboardKpiTop}>
-                    <span className={styles.dashboardKpiLabel}>{kpi.label}</span>
-                    <span
-                      className={`${styles.dashboardKpiIcon} ${
-                        kpi.tone === 'green'
-                          ? styles.dashboardKpiIconGreen
-                          : kpi.tone === 'amber'
-                          ? styles.dashboardKpiIconAmber
-                          : kpi.tone === 'slate'
-                          ? styles.dashboardKpiIconSlate
-                          : styles.dashboardKpiIconBlue
-                      }`}
-                    >
-                      <kpi.Icon size={17} aria-hidden="true" />
-                    </span>
-                  </div>
-                  <strong className={styles.dashboardKpiValue}>{kpi.value}</strong>
-                  <span className={styles.dashboardKpiDetail}>{kpi.detail}</span>
+                <article key={kpi.label} className={styles.dashboardCompactKpi}>
+                  <span className={styles.dashboardCompactKpiIcon} data-tone={kpi.tone}>
+                    <kpi.Icon size={15} aria-hidden="true" />
+                  </span>
+                  <div className={styles.dashboardCompactKpiValue}>{kpi.value}</div>
+                  <div className={styles.dashboardCompactKpiLabel}>{kpi.label}</div>
                 </article>
               ))}
             </section>
 
-            <div className={styles.dashboardContentGrid}>
-              <section className={styles.dashboardPanel} aria-labelledby="recent-inspections-title">
-                <div className={styles.dashboardPanelHeader}>
+            <section className={styles.dashboardCompactPanel} aria-labelledby="in-progress-title">
+              <div className={styles.dashboardCompactPanelHeader}>
+                <div>
+                  <h3 id="in-progress-title" className={styles.dashboardCompactPanelTitle}>
+                    Vistorias em andamento
+                  </h3>
+                  <p className={styles.dashboardCompactPanelMeta}>
+                    Acompanhe as inspeções abertas neste momento.
+                  </p>
+                </div>
+                <span className={styles.dashboardCompactPanelCount}>
+                  {OWNER_DASHBOARD_MOCK_DATA.inProgressInspections.length} abertas
+                </span>
+              </div>
+
+              <div className={styles.dashboardCompactTable} role="table" aria-label="Vistorias em andamento">
+                <div className={styles.dashboardCompactTableHeader} role="row">
+                  <span role="columnheader">Placa</span>
+                  <span role="columnheader">Veículo</span>
+                  <span role="columnheader">Operador</span>
+                  <span role="columnheader">Unidade</span>
+                  <span role="columnheader">Iniciado há</span>
+                  <span role="columnheader">Status</span>
+                  <span role="columnheader">Ação</span>
+                </div>
+
+                {OWNER_DASHBOARD_MOCK_DATA.inProgressInspections.map((inspection) => {
+                  const relatedInspection = inspectionsList.find(
+                    (item) => item.vehicle.plate === inspection.plate
+                  );
+
+                  return (
+                    <div key={inspection.id} className={styles.dashboardCompactTableRow} role="row">
+                      <div className={styles.dashboardCompactTableCell} role="cell">
+                        <span className={styles.dashboardCompactCellLabel}>Placa</span>
+                        <strong className={styles.dashboardCompactPlate}>{inspection.plate}</strong>
+                      </div>
+                      <div className={styles.dashboardCompactTableCell} role="cell">
+                        <span className={styles.dashboardCompactCellLabel}>Veículo</span>
+                        <strong>{inspection.vehicle}</strong>
+                      </div>
+                      <div className={styles.dashboardCompactTableCell} role="cell">
+                        <span className={styles.dashboardCompactCellLabel}>Operador</span>
+                        <span>{inspection.operator}</span>
+                      </div>
+                      <div className={styles.dashboardCompactTableCell} role="cell">
+                        <span className={styles.dashboardCompactCellLabel}>Unidade</span>
+                        <span>{inspection.branch}</span>
+                      </div>
+                      <div className={styles.dashboardCompactTableCell} role="cell">
+                        <span className={styles.dashboardCompactCellLabel}>Iniciado há</span>
+                        <span>{inspection.startedAgo}</span>
+                      </div>
+                      <div className={styles.dashboardCompactTableCell} role="cell">
+                        <span className={styles.dashboardCompactCellLabel}>Status</span>
+                        <span className={styles.dashboardCompactStatus} data-tone={inspection.tone}>
+                          {inspection.status}
+                        </span>
+                      </div>
+                      <div className={styles.dashboardCompactTableCell} role="cell">
+                        <span className={styles.dashboardCompactCellLabel}>Ação</span>
+                        <button
+                          type="button"
+                          className={styles.dashboardCompactRowAction}
+                          onClick={() => relatedInspection && setViewDetailsInspection(relatedInspection)}
+                          disabled={!relatedInspection}
+                        >
+                          Ver vistoria
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <div className={styles.dashboardCompactLowerGrid}>
+              <section className={styles.dashboardCompactPanel} aria-labelledby="recent-activity-title">
+                <div className={styles.dashboardCompactPanelHeader}>
                   <div>
-                    <h3 id="recent-inspections-title" className={styles.dashboardPanelTitle}>
-                      Últimas Vistorias
+                    <h3 id="recent-activity-title" className={styles.dashboardCompactPanelTitle}>
+                      Atividade recente
                     </h3>
-                    <p className={styles.dashboardPanelMeta}>Atividade mais recente da operação</p>
+                    <p className={styles.dashboardCompactPanelMeta}>
+                      Últimos registros concluídos ou atualizados.
+                    </p>
                   </div>
                   <button
                     type="button"
-                    className={styles.dashboardPanelAction}
+                    className={styles.dashboardCompactLink}
                     onClick={() => handleExistingTabChange('history', 'history')}
                   >
                     Ver todas
-                    <ChevronRight size={14} aria-hidden="true" />
+                    <ChevronRight size={13} aria-hidden="true" />
                   </button>
                 </div>
 
-                <div className={styles.dashboardInspectionList}>
+                <div className={styles.dashboardCompactActivityList}>
                   {inspectionsList.slice(0, 4).map((inspection) => {
                     const status = getDashboardInspectionStatus(inspection.classification);
 
                     return (
-                      <div key={inspection.id} className={styles.dashboardInspectionRow}>
-                        <div className={styles.dashboardInspectionIdentity}>
-                          <span className={styles.dashboardPlate}>{inspection.vehicle.plate}</span>
-                          <div className={styles.dashboardInspectionMain}>
-                            <strong className={styles.dashboardInspectionVehicle}>
-                              {inspection.vehicle.brand} {inspection.vehicle.model}
-                            </strong>
-                            <span className={styles.dashboardInspectionMeta}>
-                              {inspection.operatorName} · {inspection.branchName}
-                            </span>
+                      <div key={inspection.id} className={styles.dashboardCompactActivityRow}>
+                        <div className={styles.dashboardCompactActivityIdentity}>
+                          <strong className={styles.dashboardCompactPlate}>{inspection.vehicle.plate}</strong>
+                          <div>
+                            <strong>{inspection.vehicle.brand} {inspection.vehicle.model}</strong>
+                            <span>{inspection.operatorName} · {inspection.branchName}</span>
                           </div>
                         </div>
-
-                        <div className={styles.dashboardInspectionMetaGroup}>
-                          <span
-                            className={`${styles.dashboardStatus} ${
-                              status.tone === 'success'
-                                ? styles.dashboardStatusSuccess
-                                : status.tone === 'warning'
-                                ? styles.dashboardStatusWarning
-                                : status.tone === 'danger'
-                                ? styles.dashboardStatusDanger
-                                : styles.dashboardStatusInfo
-                            }`}
-                          >
+                        <div className={styles.dashboardCompactActivityMeta}>
+                          <span>{getDashboardInspectionTime(inspection)}</span>
+                          <span className={styles.dashboardCompactStatus} data-tone={status.tone}>
                             {status.label}
                           </span>
-                          <span className={styles.dashboardInspectionTime}>
-                            {getDashboardInspectionTime(inspection)}
-                          </span>
-                          <button
-                            type="button"
-                            className={styles.dashboardInspectionAction}
-                            onClick={() => handleOpenSendPdf(inspection)}
-                            aria-label={'Enviar vistoria ' + inspection.vehicle.plate}
-                            title="Enviar registro"
-                          >
-                            <MessageSquare size={14} aria-hidden="true" />
-                          </button>
                         </div>
                       </div>
                     );
@@ -725,48 +780,40 @@ export function OwnerDashboard({
                 </div>
               </section>
 
-              <section className={styles.dashboardPanel} aria-labelledby="operational-alerts-title">
-                <div className={styles.dashboardPanelHeader}>
+              <section className={styles.dashboardCompactPanel} aria-labelledby="pending-title">
+                <div className={styles.dashboardCompactPanelHeader}>
                   <div>
-                    <h3 id="operational-alerts-title" className={styles.dashboardPanelTitle}>
-                      Pendências & Alertas
+                    <h3 id="pending-title" className={styles.dashboardCompactPanelTitle}>
+                      Pendências
                     </h3>
-                    <p className={styles.dashboardPanelMeta}>Itens que exigem acompanhamento</p>
+                    <p className={styles.dashboardCompactPanelMeta}>
+                      Itens que exigem atenção da equipe.
+                    </p>
                   </div>
-                  <span className={styles.dashboardPanelCount}>
-                    {OWNER_DASHBOARD_MOCK_DATA.alerts.length} pendências
+                  <span className={styles.dashboardCompactPanelCount}>
+                    {OWNER_DASHBOARD_MOCK_DATA.alerts.length}
                   </span>
                 </div>
 
-                <div className={styles.dashboardAlerts}>
+                <div className={styles.dashboardCompactPendingList}>
                   {OWNER_DASHBOARD_MOCK_DATA.alerts.map((alert) => {
                     const relatedInspection = inspectionsList.find(
                       (inspection) => inspection.vehicle.plate === alert.plate
                     );
 
                     return (
-                      <div key={alert.id} className={styles.dashboardAlertRow}>
-                        <span
-                          className={`${styles.dashboardAlertIcon} ${
-                            alert.tone === 'info'
-                              ? styles.dashboardAlertIconInfo
-                              : styles.dashboardAlertIconWarning
-                          }`}
-                        >
-                          <AlertTriangle size={16} aria-hidden="true" />
+                      <div key={alert.id} className={styles.dashboardCompactPendingRow}>
+                        <span className={styles.dashboardCompactPendingIcon} data-tone={alert.tone}>
+                          <AlertTriangle size={14} aria-hidden="true" />
                         </span>
-                        <div className={styles.dashboardAlertBody}>
-                          <strong className={styles.dashboardAlertTitle}>{alert.type}</strong>
-                          <span className={styles.dashboardAlertMeta}>
-                            {alert.vehicle} · {alert.plate}
-                          </span>
-                          <span className={styles.dashboardAlertMeta}>
-                            {alert.branch} · {alert.time}
-                          </span>
+                        <div className={styles.dashboardCompactPendingBody}>
+                          <strong>{alert.type}</strong>
+                          <span>{alert.vehicle} · {alert.plate}</span>
+                          <span>{alert.branch} · {alert.time}</span>
                         </div>
                         <button
                           type="button"
-                          className={styles.dashboardAlertAction}
+                          className={styles.dashboardCompactRowAction}
                           onClick={() => relatedInspection && setViewDetailsInspection(relatedInspection)}
                           disabled={!relatedInspection}
                         >
@@ -775,100 +822,6 @@ export function OwnerDashboard({
                       </div>
                     );
                   })}
-                </div>
-              </section>
-            </div>
-
-            <div className={styles.dashboardLowerGrid}>
-              <section className={styles.dashboardPanel} aria-labelledby="active-team-title">
-                <div className={styles.dashboardPanelHeader}>
-                  <div>
-                    <h3 id="active-team-title" className={styles.dashboardPanelTitle}>
-                      Equipe Ativa
-                    </h3>
-                    <p className={styles.dashboardPanelMeta}>Acompanhe os operadores em cada unidade</p>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.dashboardPanelAction}
-                    onClick={() => handleExistingTabChange('team', 'branches')}
-                  >
-                    Gerenciar equipe
-                    <ChevronRight size={14} aria-hidden="true" />
-                  </button>
-                </div>
-
-                <div className={styles.dashboardTeamList}>
-                  {OWNER_DASHBOARD_MOCK_DATA.activeTeam.map((operator) => (
-                    <div key={operator.id} className={styles.dashboardTeamRow}>
-                      <span className={styles.dashboardAvatar} aria-hidden="true">
-                        {operator.name
-                          .split(' ')
-                          .map((part) => part[0])
-                          .slice(0, 2)
-                          .join('')}
-                      </span>
-                      <div className={styles.dashboardTeamMain}>
-                        <strong className={styles.dashboardTeamName}>{operator.name}</strong>
-                        <span className={styles.dashboardTeamMeta}>{operator.branch}</span>
-                      </div>
-                      <div className={styles.dashboardTeamStatusBlock}>
-                        <span
-                          className={`${styles.dashboardTeamStatus} ${
-                            operator.status === 'Em vistoria'
-                              ? styles.dashboardTeamStatusBusy
-                              : operator.status === 'Disponível'
-                              ? styles.dashboardTeamStatusAvailable
-                              : styles.dashboardTeamStatusOffline
-                          }`}
-                        >
-                          {operator.status}
-                        </span>
-                        {operator.currentInspection !== '—' && (
-                          <span className={styles.dashboardTeamInspection}>
-                            {operator.currentInspection}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className={styles.dashboardPanel} aria-labelledby="branches-summary-title">
-                <div className={styles.dashboardPanelHeader}>
-                  <div>
-                    <h3 id="branches-summary-title" className={styles.dashboardPanelTitle}>
-                      Unidades
-                    </h3>
-                    <p className={styles.dashboardPanelMeta}>Visão rápida por local de operação</p>
-                  </div>
-                  <Building2 size={18} color="#64748b" aria-hidden="true" />
-                </div>
-
-                <div className={styles.dashboardBranchesGrid}>
-                  {OWNER_DASHBOARD_MOCK_DATA.branches.map((branch) => (
-                    <article key={branch.id} className={styles.dashboardBranchCard}>
-                      <div className={styles.dashboardBranchHeader}>
-                        <Building2 size={16} aria-hidden="true" />
-                        <strong className={styles.dashboardBranchName}>{branch.name}</strong>
-                      </div>
-                      <div className={styles.dashboardBranchMetricGrid}>
-                        <div className={styles.dashboardBranchMetric}>
-                          <strong>{branch.inspectionsToday}</strong>
-                          <span>vistorias hoje</span>
-                        </div>
-                        <div className={styles.dashboardBranchMetric}>
-                          <strong>{branch.inProgress}</strong>
-                          <span>em andamento</span>
-                        </div>
-                        <div className={styles.dashboardBranchMetric}>
-                          <strong>{branch.pending}</strong>
-                          <span>pendências</span>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
                 </div>
               </section>
             </div>
