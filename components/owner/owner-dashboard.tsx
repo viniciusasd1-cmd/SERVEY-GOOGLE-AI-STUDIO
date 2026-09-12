@@ -282,10 +282,10 @@ export function OwnerDashboard({
     const term = historySearch.toLowerCase().trim();
     const matchesTerm =
       !term ||
-      insp.plate.toLowerCase().includes(term) ||
-      insp.make.toLowerCase().includes(term) ||
-      insp.model.toLowerCase().includes(term) ||
-      insp.version.toLowerCase().includes(term) ||
+      (insp.plate ?? '').toLowerCase().includes(term) ||
+      (insp.make ?? '').toLowerCase().includes(term) ||
+      (insp.model ?? '').toLowerCase().includes(term) ||
+      (insp.version ?? '').toLowerCase().includes(term) ||
       insp.branchName.toLowerCase().includes(term) ||
       insp.branchCode.toLowerCase().includes(term);
 
@@ -1087,16 +1087,16 @@ export function OwnerDashboard({
                           minWidth: '80px',
                         }}
                       >
-                        {insp.plate}
+                        {insp.plate || '—'}
                       </div>
 
                       <div>
                         <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
-                          {insp.make} {insp.model} {insp.version}
+                          {[insp.make, insp.model, insp.version].filter(Boolean).join(' ') || 'Veículo não identificado'}
                         </div>
                         <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span>
-                            {insp.color} • {insp.modelYear || insp.manufactureYear || 'Ano não informado'}
+                            {insp.color || '—'} • {insp.modelYear || insp.manufactureYear || 'Ano não informado'}
                           </span>
                           <span>•</span>
                           <span>{insp.branchName}{insp.branchCode !== '—' ? ` (${insp.branchCode})` : ''}</span>

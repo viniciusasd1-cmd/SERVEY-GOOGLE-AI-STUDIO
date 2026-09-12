@@ -9,13 +9,13 @@ export interface OwnerInspectionListItem {
   vehicleId: string;
   branchName: string;
   branchCode: string;
-  plate: string;
-  make: string;
-  model: string;
-  version: string;
+  plate: string | null;
+  make: string | null;
+  model: string | null;
+  version: string | null;
   manufactureYear: number | null;
   modelYear: number | null;
-  color: string;
+  color: string | null;
   assignedUserId: string | null;
   status: OwnerInspectionStatus;
   startedAt: string | null;
@@ -44,9 +44,15 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? value as Record<string, unknown> : {};
 }
 
-function firstRelation(value: unknown): Record<string, unknown> {
-  if (Array.isArray(value)) return asRecord(value[0]);
-  return asRecord(value);
+function firstRelation(value: unknown): Record<string, unknown> | null {
+  if (Array.isArray(value)) {
+    if (value.length > 1) {
+      throw new Error('Relação histórica ambígua na leitura de inspeções.');
+    }
+    return value.length === 1 ? asRecord(value[0]) : null;
+  }
+
+  return value && typeof value === 'object' ? asRecord(value) : null;
 }
 
 function requiredString(record: Record<string, unknown>, key: string): string {
@@ -57,7 +63,8 @@ function requiredString(record: Record<string, unknown>, key: string): string {
   return value;
 }
 
-function nullableString(record: Record<string, unknown>, key: string): string | null {
+function nullableString(record: Record<string, unknown> | null, key: string): string | null {
+  if (!record) return null;
   const value = record[key];
   return typeof value === 'string' && value ? value : null;
 }
@@ -70,11 +77,15 @@ function nullableNumber(record: Record<string, unknown>, key: string): number | 
 function normalizeOwnerInspectionRow(value: unknown): OwnerInspectionListItem {
   const row = asRecord(value);
   const snapshot = firstRelation(row.inspection_vehicle_snapshots);
-  const branch = firstRelation(row.branches);
+  const branch = firstRelation(row.branches) ?? {};
   const status = row.status;
 
   if (!isOwnerInspectionStatus(status)) {
     throw new Error('Status inesperado na leitura de inspeções.');
+  }
+
+  if ((status === 'IN_PROGRESS' || status === 'COMPLETED') && !snapshot) {
+    throw new Error('Snapshot histórico ausente para inspeção iniciada.');
   }
 
   return {
@@ -84,13 +95,13 @@ function normalizeOwnerInspectionRow(value: unknown): OwnerInspectionListItem {
     vehicleId: requiredString(row, 'vehicle_id'),
     branchName: typeof branch.name === 'string' ? branch.name : '—',
     branchCode: typeof branch.code === 'string' ? branch.code : '—',
-    plate: requiredString(snapshot, 'plate_number'),
-    make: requiredString(snapshot, 'make'),
-    model: requiredString(snapshot, 'model'),
-    version: requiredString(snapshot, 'version'),
+    plate: nullableString(snapshot, 'plate_number'),
+    make: nullableString(snapshot, 'make'),
+    model: nullableString(snapshot, 'model'),
+    version: nullableString(snapshot, 'version'),
     manufactureYear: nullableNumber(snapshot, 'manufacture_year'),
     modelYear: nullableNumber(snapshot, 'model_year'),
-    color: requiredString(snapshot, 'color'),
+    color: nullableString(snapshot, 'color'),
     assignedUserId: nullableString(row, 'assigned_user_id'),
     status,
     startedAt: nullableString(row, 'started_at'),
@@ -119,7 +130,7 @@ export async function listOwnerInspections(
       cancelled_at,
       created_at,
       updated_at,
-      inspection_vehicle_snapshots!inner(
+      inspection_vehicle_snapshots(
         plate_number,
         make,
         model,
