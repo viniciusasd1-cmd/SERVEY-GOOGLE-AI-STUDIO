@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ClipboardList,
   Users,
@@ -54,6 +54,12 @@ import {
 import { generateInspectionPDF } from '../../src/lib/pdf-generator';
 import { MOCK_TEMPLATES } from '../../lib/mock-inspection-data';
 import { SendPdfModal } from '../inspection/send-pdf-modal';
+import { isSupabaseReady } from '../../src/lib/supabase';
+import {
+  listOwnerInspections,
+  OwnerInspectionListItem,
+  OwnerInspectionStatus,
+} from '../../src/lib/survey-api';
 import styles from './owner-dashboard.module.css';
 
 type OwnerTab = 'dashboard' | 'history' | 'team' | 'access';
@@ -174,6 +180,25 @@ function getDashboardInspectionTime(inspection: InspectionHistoryItem) {
   return source.includes('às ') ? source.split('às ').pop() || '—' : source || '—';
 }
 
+function getOwnerInspectionStatusLabel(status: OwnerInspectionStatus) {
+  switch (status) {
+    case 'DRAFT':
+      return 'Rascunho';
+    case 'IN_PROGRESS':
+      return 'Em andamento';
+    case 'COMPLETED':
+      return 'Concluída';
+    case 'CANCELLED':
+      return 'Cancelada';
+  }
+}
+
+function formatOwnerInspectionTimestamp(value: string | null) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('pt-BR');
+}
+
 interface OwnerDashboardProps {
   currentUser: AuthenticatedUser;
   onLogout: () => void;
@@ -197,9 +222,11 @@ export function OwnerDashboard({
 
   // Estados do Histórico
   const [inspectionsList, setInspectionsList] = useState<InspectionHistoryItem[]>(MOCK_HISTORICAL_INSPECTIONS);
+  const [realInspections, setRealInspections] = useState<OwnerInspectionListItem[]>([]);
+  const [realInspectionReadState, setRealInspectionReadState] = useState<'LOADING' | 'SUCCESS' | 'EMPTY' | 'ERROR'>('LOADING');
+  const [realInspectionReadError, setRealInspectionReadError] = useState<string | null>(null);
   const [historySearch, setHistorySearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'APROVADO' | 'COM_AVARIA' | 'PENDENTE'>('ALL');
-  const [branchFilter, setBranchFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | OwnerInspectionStatus>('ALL');
 
   // Estados de Controle de Acessos & Logins
   const [accessLogs, setAccessLogs] = useState<AccessLogEntry[]>(MOCK_ACCESS_LOGS);
@@ -218,23 +245,54 @@ export function OwnerDashboard({
   const [isSendPdfOpen, setIsSendPdfOpen] = useState(false);
   const [viewDetailsInspection, setViewDetailsInspection] = useState<InspectionHistoryItem | null>(null);
 
-  // Filtro de Histórico
-  const filteredInspections = inspectionsList.filter((insp) => {
+  useEffect(() => {
+    if (activeTab !== 'history') return;
+
+    let active = true;
+    setRealInspectionReadState('LOADING');
+    setRealInspectionReadError(null);
+
+    if (!isSupabaseReady()) {
+      setRealInspectionReadState('ERROR');
+      setRealInspectionReadError('Não foi possível carregar as inspeções agora.');
+      return () => {
+        active = false;
+      };
+    }
+
+    void listOwnerInspections({ limit: 25 })
+      .then((items) => {
+        if (!active) return;
+        setRealInspections(items);
+        setRealInspectionReadState(items.length > 0 ? 'SUCCESS' : 'EMPTY');
+      })
+      .catch(() => {
+        if (!active) return;
+        setRealInspectionReadState('ERROR');
+        setRealInspectionReadError('Não foi possível carregar as inspeções agora.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activeTab]);
+
+  // Filtro da listagem real de inspeções
+  const filteredRealInspections = realInspections.filter((insp) => {
     const term = historySearch.toLowerCase().trim();
     const matchesTerm =
       !term ||
-      insp.vehicle.plate.toLowerCase().includes(term) ||
-      insp.vehicle.model.toLowerCase().includes(term) ||
-      insp.vehicle.brand.toLowerCase().includes(term) ||
-      insp.operatorName.toLowerCase().includes(term);
+      insp.plate.toLowerCase().includes(term) ||
+      insp.make.toLowerCase().includes(term) ||
+      insp.model.toLowerCase().includes(term) ||
+      insp.version.toLowerCase().includes(term) ||
+      insp.branchName.toLowerCase().includes(term) ||
+      insp.branchCode.toLowerCase().includes(term);
 
     const matchesStatus =
-      statusFilter === 'ALL' || insp.classification === statusFilter;
+      statusFilter === 'ALL' || insp.status === statusFilter;
 
-    const matchesBranch =
-      branchFilter === 'ALL' || insp.branchName.includes(branchFilter);
-
-    return matchesTerm && matchesStatus && matchesBranch;
+    return matchesTerm && matchesStatus;
   });
 
   // Filtro de Logs de Acesso
@@ -919,49 +977,66 @@ export function OwnerDashboard({
                       color: statusFilter === 'ALL' ? '#2563eb' : '#475569',
                     }}
                   >
-                    Todas ({inspectionsList.length})
+                    Todas ({realInspections.length})
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setStatusFilter('APROVADO')}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      border: '1px solid ' + (statusFilter === 'APROVADO' ? '#16a34a' : '#cbd5e1'),
-                      backgroundColor: statusFilter === 'APROVADO' ? '#f0fdf4' : '#ffffff',
-                      color: statusFilter === 'APROVADO' ? '#166534' : '#475569',
-                    }}
-                  >
-                    Aprovadas
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setStatusFilter('COM_AVARIA')}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      border: '1px solid ' + (statusFilter === 'COM_AVARIA' ? '#d97706' : '#cbd5e1'),
-                      backgroundColor: statusFilter === 'COM_AVARIA' ? '#fef3c7' : '#ffffff',
-                      color: statusFilter === 'COM_AVARIA' ? '#92400e' : '#475569',
-                    }}
-                  >
-                    Com Avarias
-                  </button>
+                  {(['DRAFT', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setStatusFilter(status)}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: '1px solid ' + (statusFilter === status ? '#2563eb' : '#cbd5e1'),
+                        backgroundColor: statusFilter === status ? '#eff6ff' : '#ffffff',
+                        color: statusFilter === status ? '#2563eb' : '#475569',
+                      }}
+                    >
+                      {getOwnerInspectionStatusLabel(status)}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
 
             {/* Lista de Vistorias */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {filteredInspections.length === 0 ? (
+              {realInspectionReadState === 'LOADING' ? (
+                <div
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    padding: '40px 20px',
+                    textAlign: 'center',
+                    color: '#64748b',
+                  }}
+                >
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: '14px' }}>
+                    Carregando inspeções...
+                  </p>
+                </div>
+              ) : realInspectionReadState === 'ERROR' ? (
+                <div
+                  role="alert"
+                  style={{
+                    backgroundColor: '#fff7ed',
+                    borderRadius: '12px',
+                    border: '1px solid #fed7aa',
+                    padding: '40px 20px',
+                    textAlign: 'center',
+                    color: '#9a3412',
+                  }}
+                >
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: '14px' }}>
+                    {realInspectionReadError || 'Não foi possível carregar as inspeções agora.'}
+                  </p>
+                </div>
+              ) : filteredRealInspections.length === 0 ? (
                 <div
                   style={{
                     backgroundColor: '#ffffff',
@@ -974,13 +1049,15 @@ export function OwnerDashboard({
                 >
                   <Search size={32} style={{ margin: '0 auto 10px', color: '#cbd5e1' }} />
                   <p style={{ margin: 0, fontWeight: 600, fontSize: '14px' }}>
-                    Nenhuma vistoria encontrada com os filtros selecionados.
+                    {realInspectionReadState === 'EMPTY'
+                      ? 'Nenhuma inspeção disponível.'
+                      : 'Nenhuma inspeção encontrada com os filtros selecionados.'}
                   </p>
                 </div>
               ) : (
-                filteredInspections.map((insp) => (
+                filteredRealInspections.map((insp) => (
                   <div
-                    key={insp.id}
+                    key={insp.inspectionId}
                     style={{
                       backgroundColor: '#ffffff',
                       borderRadius: '12px',
@@ -1010,35 +1087,37 @@ export function OwnerDashboard({
                           minWidth: '80px',
                         }}
                       >
-                        {insp.vehicle.plate}
+                        {insp.plate}
                       </div>
 
                       <div>
                         <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
-                          {insp.vehicle.brand} {insp.vehicle.model}
+                          {insp.make} {insp.model} {insp.version}
                         </div>
                         <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span>{insp.vehicle.color} • {insp.vehicle.year}</span>
+                          <span>
+                            {insp.color} • {insp.modelYear || insp.manufactureYear || 'Ano não informado'}
+                          </span>
                           <span>•</span>
-                          <span>{insp.branchName}</span>
+                          <span>{insp.branchName}{insp.branchCode !== '—' ? ` (${insp.branchCode})` : ''}</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Vistoriador & Horário */}
+                    {/* Responsável & Horário */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '180px' }}>
                       <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>
-                        Vistoriador / Horário
+                        Responsável / Atualização
                       </span>
                       <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
-                        {insp.operatorName}
+                        {insp.assignedUserId ? 'Responsável atribuído' : '—'}
                       </span>
                       <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-                        {insp.startedAt} • {insp.inspectionDuration}
+                        {formatOwnerInspectionTimestamp(insp.startedAt || insp.updatedAt)}
                       </span>
                     </div>
 
-                    {/* Badge de Status / Avarias */}
+                    {/* Badge de Status real */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span
                         style={{
@@ -1046,46 +1125,26 @@ export function OwnerDashboard({
                           fontWeight: 700,
                           padding: '4px 10px',
                           borderRadius: '6px',
-                          backgroundColor:
-                            insp.classification === 'APROVADO'
-                              ? '#f0fdf4'
-                              : insp.classification === 'COM_AVARIA'
-                              ? '#fef3c7'
-                              : '#eff6ff',
-                          color:
-                            insp.classification === 'APROVADO'
-                              ? '#166534'
-                              : insp.classification === 'COM_AVARIA'
-                              ? '#92400e'
-                              : '#1e40af',
-                          border: `1px solid ${
-                            insp.classification === 'APROVADO'
-                              ? '#bbf7d0'
-                              : insp.classification === 'COM_AVARIA'
-                              ? '#fde68a'
-                              : '#bfdbfe'
-                          }`,
+                          backgroundColor: insp.status === 'COMPLETED' ? '#f0fdf4' : insp.status === 'CANCELLED' ? '#fef2f2' : '#eff6ff',
+                          color: insp.status === 'COMPLETED' ? '#166534' : insp.status === 'CANCELLED' ? '#991b1b' : '#1e40af',
+                          border: `1px solid ${insp.status === 'COMPLETED' ? '#bbf7d0' : insp.status === 'CANCELLED' ? '#fecaca' : '#bfdbfe'}`,
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '5px',
                         }}
                       >
-                        {insp.classification === 'APROVADO' && <CheckCircle2 size={13} />}
-                        {insp.classification === 'COM_AVARIA' && <AlertTriangle size={13} />}
-                        {insp.classification === 'PENDENTE' && <Clock size={13} />}
-                        {insp.classification === 'APROVADO'
-                          ? '100% Aprovado'
-                          : insp.classification === 'COM_AVARIA'
-                          ? `${insp.damageCount} Avaria(s)`
-                          : 'Em Andamento'}
+                        {insp.status === 'COMPLETED' && <CheckCircle2 size={13} />}
+                        {insp.status === 'IN_PROGRESS' && <Clock size={13} />}
+                        {insp.status === 'CANCELLED' && <AlertTriangle size={13} />}
+                        {getOwnerInspectionStatusLabel(insp.status)}
                       </span>
                     </div>
 
-                    {/* Ações Rápidas do Laudo */}
+                    {/* Detalhes/PDF permanecem fora do escopo da Phase A */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <button
                         type="button"
-                        onClick={() => setViewDetailsInspection(insp)}
+                        disabled
                         style={{
                           backgroundColor: '#ffffff',
                           color: '#334155',
@@ -1094,12 +1153,13 @@ export function OwnerDashboard({
                           padding: '6px 10px',
                           fontSize: '11.5px',
                           fontWeight: 600,
-                          cursor: 'pointer',
+                          cursor: 'not-allowed',
+                          opacity: 0.6,
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
                         }}
-                        title="Ver fotos e itens checados"
+                        title="Detalhes serão integrados na próxima fase"
                       >
                         <Eye size={13} />
                         Detalhes
@@ -1107,7 +1167,7 @@ export function OwnerDashboard({
 
                       <button
                         type="button"
-                        onClick={() => handleDownloadPdf(insp)}
+                        disabled
                         style={{
                           backgroundColor: '#eff6ff',
                           color: '#2563eb',
@@ -1116,12 +1176,13 @@ export function OwnerDashboard({
                           padding: '6px 10px',
                           fontSize: '11.5px',
                           fontWeight: 600,
-                          cursor: 'pointer',
+                          cursor: 'not-allowed',
+                          opacity: 0.6,
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
                         }}
-                        title="Baixar laudo oficial em PDF"
+                        title="PDF será integrado na próxima fase"
                       >
                         <Download size={13} />
                         Baixar PDF
@@ -1129,7 +1190,7 @@ export function OwnerDashboard({
 
                       <button
                         type="button"
-                        onClick={() => handleOpenSendPdf(insp)}
+                        disabled
                         style={{
                           backgroundColor: '#16a34a',
                           color: '#ffffff',
@@ -1138,13 +1199,14 @@ export function OwnerDashboard({
                           padding: '6px 12px',
                           fontSize: '11.5px',
                           fontWeight: 700,
-                          cursor: 'pointer',
+                          cursor: 'not-allowed',
+                          opacity: 0.6,
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '5px',
                           boxShadow: '0 1px 3px rgba(22, 163, 74, 0.25)',
                         }}
-                        title="Enviar PDF no WhatsApp"
+                        title="Envio será integrado na próxima fase"
                       >
                         <MessageSquare size={13} />
                         WhatsApp (PDF)
