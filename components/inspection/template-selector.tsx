@@ -366,31 +366,35 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           </div>
         )}
 
-        {/* Toggle para Barra Técnica de RPC Supabase */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-          <button
-            type="button"
-            onClick={() => setShowRpcToolbar(!showRpcToolbar)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#64748b',
-              fontSize: '11px',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '2px 4px',
-            }}
-            id="toggle-rpc-toolbar-btn"
-          >
-            <Database size={12} />
-            <span>{showRpcToolbar ? 'Ocultar ferramentas RPC Supabase' : 'Ferramentas RPC Supabase (Opcional)'}</span>
-          </button>
-        </div>
+        {import.meta.env.DEV === true && (
+          <>
+            {/* Toggle para Barra Técnica de RPC Supabase */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setShowRpcToolbar(!showRpcToolbar)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#64748b',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 4px',
+                }}
+                id="toggle-rpc-toolbar-btn"
+              >
+                <Database size={12} />
+                <span>{showRpcToolbar ? 'Ocultar ferramentas RPC Supabase' : 'Ferramentas RPC Supabase (Opcional)'}</span>
+              </button>
+            </div>
+          </>
+        )}
 
         {/* Barra de Teste RPC Supabase com input de inspectionId */}
-        {showRpcToolbar && (
+        {import.meta.env.DEV === true && showRpcToolbar && (
           <div
             id="supabase-rpc-toolbar"
             style={{

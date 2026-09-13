@@ -943,30 +943,41 @@ export const ChecklistScreen: React.FC<ChecklistScreenProps> = ({
                       {renderResponseControls(step, response)}
                     </div>
 
-                    {/* Área de Registro Fotográfico - Placeholder Desabilitado */}
+                    {/* Área de Registro Fotográfico local */}
                     <div className={styles.photoSection}>
                       <span className={styles.controlLabel}>
                         Evidências Fotográficas
                       </span>
-                      <div
-                        id={`photo-placeholder-${step.id}`}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '12px 14px',
-                          border: '1px dashed #cbd5e1',
-                          borderRadius: '8px',
-                          backgroundColor: '#f8fafc',
-                          color: '#64748b',
-                          fontSize: '12px',
-                          cursor: 'not-allowed',
-                          opacity: 0.9,
-                        }}
+                      {response?.photos && response.photos.length > 0 && (
+                        <div className={styles.photoGallery} aria-label={`Fotos do item ${step.title}`}>
+                          {response.photos.map((photo) => (
+                            <div className={styles.photoItem} key={photo.id}>
+                              <img
+                                className={styles.photoImg}
+                                src={photo.url}
+                                alt={photo.caption || `Foto do item ${step.title}`}
+                              />
+                              <button
+                                type="button"
+                                className={styles.removePhotoBtn}
+                                onClick={(event) => handleRemovePhoto(step.id, photo.id, event)}
+                                aria-label={`Remover ${photo.caption || `foto do item ${step.title}`}`}
+                              >
+                                <Trash2 size={13} aria-hidden="true" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className={styles.photoAddBtn}
+                        onClick={() => handleTriggerAddPhoto(step.id)}
+                        aria-label={`Adicionar foto ao item ${step.title}`}
                       >
-                        <Camera size={18} color="#94a3b8" />
-                        <span style={{ fontWeight: 500 }}>Fotos serão adicionadas em etapa futura</span>
-                      </div>
+                        <Camera size={18} aria-hidden="true" />
+                        Adicionar foto
+                      </button>
                     </div>
 
                     {/* Campo de Observações Curtas */}

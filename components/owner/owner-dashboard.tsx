@@ -57,8 +57,16 @@ import { SendPdfModal } from '../inspection/send-pdf-modal';
 import { isSupabaseReady } from '../../src/lib/supabase';
 import {
   listOwnerInspections,
+  listAvailableOwnerBranches,
+  findOwnerVehicleByPlate,
+  normalizeOwnerVehiclePlate,
+  isSupportedOwnerVehiclePlate,
+  createOwnerInspection,
   OwnerInspectionListItem,
   OwnerInspectionStatus,
+  OwnerInspectionBranchOption,
+  OwnerInspectionVehicleOption,
+  OwnerVehicleLookupResult,
 } from '../../src/lib/survey-api';
 import styles from './owner-dashboard.module.css';
 
@@ -225,8 +233,23 @@ export function OwnerDashboard({
   const [realInspections, setRealInspections] = useState<OwnerInspectionListItem[]>([]);
   const [realInspectionReadState, setRealInspectionReadState] = useState<'LOADING' | 'SUCCESS' | 'EMPTY' | 'ERROR'>('LOADING');
   const [realInspectionReadError, setRealInspectionReadError] = useState<string | null>(null);
+  const [realInspectionRefreshToken, setRealInspectionRefreshToken] = useState(0);
   const [historySearch, setHistorySearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | OwnerInspectionStatus>('ALL');
+
+  // Estados da criação real de vistoria em DRAFT
+  const [isCreateInspectionOpen, setIsCreateInspectionOpen] = useState(false);
+  const [createInspectionReadState, setCreateInspectionReadState] = useState<'IDLE' | 'LOADING' | 'SUCCESS' | 'EMPTY' | 'ERROR'>('IDLE');
+  const [createInspectionReadError, setCreateInspectionReadError] = useState<string | null>(null);
+  const [availableBranches, setAvailableBranches] = useState<OwnerInspectionBranchOption[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState('');
+  const [vehiclePlateInput, setVehiclePlateInput] = useState('');
+  const [vehicleLookupState, setVehicleLookupState] = useState<'IDLE' | 'LOADING' | 'FOUND' | 'NOT_FOUND' | 'AMBIGUOUS' | 'ERROR'>('IDLE');
+  const [vehicleLookupError, setVehicleLookupError] = useState<string | null>(null);
+  const [identifiedVehicle, setIdentifiedVehicle] = useState<OwnerInspectionVehicleOption | null>(null);
+  const [isVehicleConfirmed, setIsVehicleConfirmed] = useState(false);
+  const [createInspectionError, setCreateInspectionError] = useState<string | null>(null);
+  const [isCreatingInspection, setIsCreatingInspection] = useState(false);
 
   // Estados de Controle de Acessos & Logins
   const [accessLogs, setAccessLogs] = useState<AccessLogEntry[]>(MOCK_ACCESS_LOGS);
@@ -244,6 +267,8 @@ export function OwnerDashboard({
   const [selectedInspectionForModal, setSelectedInspectionForModal] = useState<InspectionHistoryItem | null>(null);
   const [isSendPdfOpen, setIsSendPdfOpen] = useState(false);
   const [viewDetailsInspection, setViewDetailsInspection] = useState<InspectionHistoryItem | null>(null);
+  const isBranchScopedRole = currentUser.membershipRole === 'SUPERVISOR' || currentUser.membershipRole === 'INSPECTOR';
+  const canChooseBranch = currentUser.membershipRole === 'OWNER' || currentUser.membershipRole === 'ADMIN';
 
   useEffect(() => {
     if (activeTab !== 'history') return;
@@ -275,7 +300,80 @@ export function OwnerDashboard({
     return () => {
       active = false;
     };
-  }, [activeTab]);
+  }, [activeTab, realInspectionRefreshToken]);
+
+  useEffect(() => {
+    if (!isCreateInspectionOpen) return;
+
+    let active = true;
+    setCreateInspectionReadState('LOADING');
+    setCreateInspectionReadError(null);
+    setCreateInspectionError(null);
+
+    if (!isSupabaseReady()) {
+      setCreateInspectionReadState('ERROR');
+      setCreateInspectionReadError('Não foi possível carregar as opções agora.');
+      return () => {
+        active = false;
+      };
+    }
+
+    const membershipBranchId = currentUser.branchId;
+
+    if (isBranchScopedRole && !membershipBranchId) {
+      setCreateInspectionReadState('ERROR');
+      setCreateInspectionReadError('Não foi possível resolver a unidade ativa da sua associação.');
+      return () => {
+        active = false;
+      };
+    }
+
+    void listAvailableOwnerBranches(isBranchScopedRole ? membershipBranchId ?? undefined : undefined)
+      .then((branches) => {
+        if (!active) return;
+        setAvailableBranches(branches);
+
+        if (branches.length === 0) {
+          setCreateInspectionReadState(isBranchScopedRole ? 'ERROR' : 'EMPTY');
+          setCreateInspectionReadError(
+            isBranchScopedRole
+              ? 'Não foi possível resolver a unidade ativa da sua associação.'
+              : 'Nenhuma unidade ativa cadastrada.',
+          );
+          return;
+        }
+
+        if (isBranchScopedRole) {
+          setSelectedBranchId(branches[0].id);
+        } else if (branches.length === 1) {
+          setSelectedBranchId(branches[0].id);
+        } else {
+          setSelectedBranchId('');
+        }
+
+        setCreateInspectionReadState('SUCCESS');
+      })
+      .catch(() => {
+        if (!active) return;
+        setCreateInspectionReadState('ERROR');
+        setCreateInspectionReadError('Não foi possível carregar as opções agora.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentUser.branchId, currentUser.membershipRole, isCreateInspectionOpen]);
+
+  useEffect(() => {
+    if (!isCreateInspectionOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeCreateInspectionModal();
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isCreateInspectionOpen, isCreatingInspection]);
 
   // Filtro da listagem real de inspeções
   const filteredRealInspections = realInspections.filter((insp) => {
@@ -326,6 +424,109 @@ export function OwnerDashboard({
   const handleExistingTabChange = (tab: OwnerTab, sidebarItem: OwnerSidebarItemId) => {
     setActiveTab(tab);
     setActiveSidebarItem(sidebarItem);
+  };
+
+  const resetCreateInspectionForm = () => {
+    setSelectedBranchId('');
+    setVehiclePlateInput('');
+    setVehicleLookupState('IDLE');
+    setVehicleLookupError(null);
+    setIdentifiedVehicle(null);
+    setIsVehicleConfirmed(false);
+    setCreateInspectionError(null);
+    setAvailableBranches([]);
+    setCreateInspectionReadState('IDLE');
+    setCreateInspectionReadError(null);
+  };
+
+  const openCreateInspectionModal = () => {
+    setCreateInspectionError(null);
+    setIsCreateInspectionOpen(true);
+  };
+
+  const closeCreateInspectionModal = () => {
+    if (isCreatingInspection) return;
+    setIsCreateInspectionOpen(false);
+    resetCreateInspectionForm();
+  };
+
+  const handleVehiclePlateInputChange = (value: string) => {
+    setVehiclePlateInput(normalizeOwnerVehiclePlate(value));
+    setVehicleLookupState('IDLE');
+    setVehicleLookupError(null);
+    setIdentifiedVehicle(null);
+    setIsVehicleConfirmed(false);
+  };
+
+  const handleFindVehicle = async () => {
+    const normalizedPlate = normalizeOwnerVehiclePlate(vehiclePlateInput);
+    setVehiclePlateInput(normalizedPlate);
+    setVehicleLookupError(null);
+    setIdentifiedVehicle(null);
+    setIsVehicleConfirmed(false);
+
+    if (!isSupportedOwnerVehiclePlate(normalizedPlate)) {
+      setVehicleLookupState('ERROR');
+      setVehicleLookupError('Digite uma placa válida para continuar.');
+      return;
+    }
+
+    setVehicleLookupState('LOADING');
+
+    try {
+      const result: OwnerVehicleLookupResult = await findOwnerVehicleByPlate(normalizedPlate);
+      if (result.status === 'NOT_FOUND') {
+        setVehicleLookupState('NOT_FOUND');
+        return;
+      }
+      if (result.status === 'AMBIGUOUS') {
+        setVehicleLookupState('AMBIGUOUS');
+        return;
+      }
+
+      setIdentifiedVehicle(result.vehicle);
+      setVehicleLookupState('FOUND');
+    } catch {
+      setVehicleLookupState('ERROR');
+      setVehicleLookupError('Não foi possível consultar o veículo agora.');
+    }
+  };
+
+  const handleCreateInspection = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isCreatingInspection) return;
+
+    if (!selectedBranchId || !identifiedVehicle || !isVehicleConfirmed) {
+      setCreateInspectionError('Resolva a unidade e confirme um veículo válido para continuar.');
+      return;
+    }
+
+    setIsCreatingInspection(true);
+    setCreateInspectionError(null);
+
+    try {
+      const result = await createOwnerInspection({
+        branchId: selectedBranchId,
+        vehicleId: identifiedVehicle.id,
+      });
+
+      if (!result.inspectionId || result.status !== 'DRAFT') {
+        throw new Error('Não foi possível confirmar a criação da vistoria.');
+      }
+
+      setIsCreateInspectionOpen(false);
+      resetCreateInspectionForm();
+      setActiveTab('history');
+      setActiveSidebarItem('history');
+      setRealInspectionRefreshToken((value) => value + 1);
+      setSecurityToast('Vistoria criada como rascunho.');
+    } catch (error) {
+      setCreateInspectionError(
+        error instanceof Error ? error.message : 'Não foi possível criar a vistoria.',
+      );
+    } finally {
+      setIsCreatingInspection(false);
+    }
   };
 
   // Ação: Baixar PDF de uma vistoria do histórico
@@ -1227,9 +1428,7 @@ export function OwnerDashboard({
             <TeamManagement
               currentUser={currentUser}
               onBack={() => handleExistingTabChange('dashboard', 'home')}
-              onStartInspectionForUser={(operatorName) => {
-                onStartNewInspection();
-              }}
+              onStartInspectionForUser={() => openCreateInspectionModal()}
             />
           </div>
         )}
@@ -1599,6 +1798,187 @@ export function OwnerDashboard({
           </div>
         )}
       </main>
+
+      {isCreateInspectionOpen && (
+        <div
+          className={styles.createInspectionOverlay}
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeCreateInspectionModal();
+          }}
+        >
+          <div
+            className={styles.createInspectionModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-inspection-title"
+          >
+            <div className={styles.createInspectionHeader}>
+              <div>
+                <span className={styles.createInspectionEyebrow}>NOVA VISTORIA</span>
+                <h2 id="create-inspection-title" className={styles.createInspectionTitle}>
+                  Criar vistoria como rascunho
+                </h2>
+                <p className={styles.createInspectionDescription}>
+                  Selecione a unidade e o veículo. O responsável será definido antes do início da vistoria.
+                </p>
+              </div>
+              <button
+                type="button"
+                className={styles.createInspectionCloseButton}
+                onClick={closeCreateInspectionModal}
+                disabled={isCreatingInspection}
+                aria-label="Fechar criação de vistoria"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+
+            {createInspectionReadState === 'LOADING' ? (
+              <div className={styles.createInspectionState} role="status">
+                Carregando unidades...
+              </div>
+            ) : createInspectionReadState === 'ERROR' ? (
+              <div className={styles.createInspectionError} role="alert">
+                {createInspectionReadError || 'Não foi possível carregar as opções agora.'}
+              </div>
+            ) : createInspectionReadState === 'EMPTY' ? (
+              <div className={styles.createInspectionEmpty}>
+                <strong>Nenhuma unidade ativa cadastrada.</strong>
+                <span>Cadastre uma unidade em Configurações &gt; Unidades antes de criar uma vistoria.</span>
+              </div>
+            ) : (
+              <form className={styles.createInspectionForm} onSubmit={handleCreateInspection}>
+                {canChooseBranch && availableBranches.length > 1 ? (
+                  <label className={styles.createInspectionField}>
+                    <span className={styles.createInspectionLabel}>Unidade *</span>
+                    <select
+                      className={styles.createInspectionSelect}
+                      value={selectedBranchId}
+                      onChange={(event) => setSelectedBranchId(event.target.value)}
+                      autoFocus
+                      disabled={isCreatingInspection}
+                    >
+                      <option value="">Selecione uma unidade</option>
+                      {availableBranches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name} {branch.code !== '—' ? `• ${branch.code}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <div className={styles.createInspectionContext}>
+                    Vistoria em: <strong>{availableBranches[0]?.name || 'Unidade não resolvida'}</strong>
+                    {availableBranches[0]?.code !== '—' && availableBranches[0]?.code
+                      ? ` • ${availableBranches[0].code}`
+                      : ''}
+                  </div>
+                )}
+
+                <div className={styles.createInspectionField}>
+                  <span className={styles.createInspectionLabel}>Identificar veículo</span>
+                  <div className={styles.createInspectionLookupActions}>
+                    <button
+                      type="button"
+                      className={styles.createInspectionQrButton}
+                      disabled
+                      title="Leitura por QR Code será adicionada em uma próxima etapa"
+                    >
+                      Ler QR Code
+                    </button>
+                    <span className={styles.createInspectionOr}>ou</span>
+                    <span className={styles.createInspectionHint}>Digitar placa</span>
+                  </div>
+                  <div className={styles.createInspectionPlateLookup}>
+                    <input
+                      id="owner-create-vehicle-plate"
+                      className={styles.createInspectionSearch}
+                      type="text"
+                      inputMode="text"
+                      autoComplete="off"
+                      maxLength={10}
+                      value={vehiclePlateInput}
+                      onChange={(event) => handleVehiclePlateInputChange(event.target.value)}
+                      placeholder="ABC1D23"
+                      aria-label="Placa do veículo"
+                      disabled={isCreatingInspection}
+                      autoFocus={!canChooseBranch || availableBranches.length === 1}
+                    />
+                    <button
+                      type="button"
+                      className={styles.createInspectionPrimaryButton}
+                      onClick={handleFindVehicle}
+                      disabled={isCreatingInspection || vehicleLookupState === 'LOADING' || !vehiclePlateInput}
+                    >
+                      {vehicleLookupState === 'LOADING' ? 'Buscando...' : 'Buscar'}
+                    </button>
+                  </div>
+
+                  {vehicleLookupState === 'NOT_FOUND' && (
+                    <div className={styles.createInspectionEmpty} role="status">
+                      <strong>Veículo não encontrado.</strong>
+                      <span>Cadastre o veículo antes de iniciar a vistoria.</span>
+                    </div>
+                  )}
+                  {vehicleLookupState === 'AMBIGUOUS' && (
+                    <div className={styles.createInspectionError} role="alert">
+                      Não foi possível confirmar esta placa. Existem registros atuais inconsistentes.
+                    </div>
+                  )}
+                  {vehicleLookupState === 'ERROR' && (
+                    <div className={styles.createInspectionError} role="alert">
+                      {vehicleLookupError || 'Não foi possível consultar o veículo agora.'}
+                    </div>
+                  )}
+
+                  {identifiedVehicle && vehicleLookupState === 'FOUND' && (
+                    <div className={styles.createInspectionVehicleConfirmation}>
+                      <span className={styles.createInspectionVehiclePlate}>{identifiedVehicle.currentPlate}</span>
+                      <span className={styles.createInspectionVehicleInfo}>
+                        <strong>{[identifiedVehicle.make, identifiedVehicle.model, identifiedVehicle.version].filter(Boolean).join(' ') || 'Veículo identificado'}</strong>
+                        <span>{[identifiedVehicle.modelYear, identifiedVehicle.color].filter(Boolean).join(' • ') || 'Dados complementares indisponíveis'}</span>
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.createInspectionSecondaryButton}
+                        onClick={() => setIsVehicleConfirmed(true)}
+                        disabled={isCreatingInspection || isVehicleConfirmed}
+                      >
+                        {isVehicleConfirmed ? 'Veículo confirmado' : 'Usar este veículo'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {createInspectionError && (
+                  <div className={styles.createInspectionError} role="alert">
+                    {createInspectionError}
+                  </div>
+                )}
+
+                <div className={styles.createInspectionFooter}>
+                  <button
+                    type="button"
+                    className={styles.createInspectionSecondaryButton}
+                    onClick={closeCreateInspectionModal}
+                    disabled={isCreatingInspection}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.createInspectionPrimaryButton}
+                    disabled={isCreatingInspection || !selectedBranchId || !identifiedVehicle || !isVehicleConfirmed}
+                  >
+                    {isCreatingInspection ? 'Criando...' : 'Criar vistoria'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ========================================================= */}
       {/* MODAL: DETALHES DE UMA VISTORIA SELECIONADA NO HISTÓRICO */}
